@@ -1,5 +1,7 @@
 # HangarShopApp
 
+Read and follow `AGENTS.md` (ground rules) before any work. Skills are in `.claude/skills`.
+
 ## Notes
 
 Human-readable notes (hub, research, decisions, ticket plans, session logs) live in the Obsidian vault at `E:\Projects\Obsidian\10 Projects\HangarShopApp`. Follow the vault conventions in `E:\Projects\Obsidian\CLAUDE.md` when reading or writing there. Agent-facing docs (`CONTEXT.md`, `docs/adr/`, `docs/agents/`) stay in this repo.
