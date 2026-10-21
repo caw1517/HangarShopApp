@@ -10,6 +10,7 @@ Every agent working on this repo follows these rules: Claude Code, Codex, review
 6. Always ask Canaan first about new dependencies or paid services, data-model changes, anything touching security/auth, and deleting anything.
 7. Ask Canaan whenever an approval or a wayfinder/general question comes up; don't hold questions for standups.
 8. All UI must be fully responsive: phone, tablet, and desktop monitor.
+9. PRs are squash-merged; the PR title becomes the commit on `main`, so write it as a conventional commit (`feat: ...`, `fix: ...`, `chore: ...`) and reference the issue in the body (`Closes #N`).
 
 ## Process
 Follow wayfinder: map, then decisions, then (when an item is `ready-for-agent`) `to-spec`, then `to-tickets`. The skills live in `.claude/skills` (see `.claude/skills/README.md`). Issue tracker, labels, and domain-doc setup are in `docs/agents/`. Human-readable notes go in the Obsidian vault; see `CLAUDE.md`.
