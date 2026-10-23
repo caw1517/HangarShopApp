@@ -1,3 +1,39 @@
+---
+name: HangarShopApp Design System (v5 Untitled UI + Refactoring UI Edition)
+stack: React 19, TypeScript, Tailwind CSS, shadcn/ui, @untitledui/icons, lucide-react
+references:
+  - MaintainX (3-pane split execution shell & work orders architecture)
+  - Asset Panda (2-line stacked register cells & QR scan overlay)
+  - InvenTree (hierarchical storage location tree & lot rollups)
+  - Untitled UI React v8 (Badge type="modern", InputNumber group, TableCard, --shadow-xs-skeuomorphic)
+  - Refactoring UI & ConardLi/garden-skills web-design-engineer (Anti-Slop guardrails)
+tokens:
+  font_sans: "\"Inter\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif"
+  font_mono: "\"JetBrains Mono\", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+  numeric_variant: "tabular-nums"
+  colors:
+    canvas_bg: "#f9fafb"        # gray-50
+    surface_primary: "#ffffff"  # pure white
+    surface_active_row: "rgba(242, 244, 247, 0.9)" # gray-100/90
+    sidebar_bg: "#0c111d"       # gray-950
+    sidebar_active: "#1f242f"   # gray-900
+    ink_primary: "#101828"      # gray-900
+    ink_secondary: "#344054"    # gray-700
+    ink_muted: "#667085"        # gray-500
+    border_hairline: "#e4e7ec"  # gray-200 (1px)
+    border_input: "#d0d5dd"     # gray-300 (ring-1 ring-inset)
+    brand_primary: "#155eef"    # blue-600
+    brand_hover: "#004eeb"      # blue-700
+    dot_success: "#17b26a"      # green-500 (6px dot)
+    dot_warning: "#f79009"      # amber-500 (6px dot)
+    dot_danger: "#f04438"       # red-500 (6px dot)
+  shadows:
+    shadow_2xs: "0px 1px 2px rgba(10, 13, 18, 0.04)"
+    shadow_xs: "0px 1px 2px rgba(10, 13, 18, 0.05)"
+    shadow_skeuomorphic: "0px 0px 0px 1px rgba(10, 13, 18, 0.18) inset, 0px -2px 0px 0px rgba(10, 13, 18, 0.05) inset"
+    shadow_xs_skeuomorphic: "var(--shadow-skeuomorphic), var(--shadow-xs)"
+---
+
 # HangarShopApp Design System & Anti-Vibe-Coding Specification
 
 HangarShopApp is a modern, high-density operational application for aviation maintenance technicians, inspectors, and managers. Its visual architecture is anchored to **Asset Panda + MaintainX** (with **InvenTree** location and lot hierarchy patterns), chosen by the product owner after reviewing real product screenshots:
@@ -155,3 +191,40 @@ Before building individual feature screens, developers must implement and reuse 
 6. **`<CycleCountStepperCard />`**: Mobile/tablet lot counting card with large `- / +` tactile steppers, stock-unit badge, live variance delta (`tabular-nums`), and `Save & Count Next` primary blue CTA (`#2563EB`).
 7. **`<BarcodeScannerSheet />` & `<OfflineOutboxBar />`**: Asset Panda camera barcode/QR scanner overlay + slim bottom offline sync bar (`Working offline · N queued`).
 8. **`<ComplianceSignoffBlock />` & `<HelperDisclaimerBanner />`**: Structured sign-off card capturing typed full name, authenticated login, certificate type & number (or explicit `N/A`, never blank), optional drawn signature canvas, auditor independence attestation, and the explicit compliance helper disclaimer (`Internal compliance helper record — not an FAA-authorized electronic recordkeeping or electronic signature system`).
+
+---
+
+## 6. Untitled UI React v8 + Refactoring UI + `web-design-engineer` Anti-Slop Contract (v5 Canonical Upgrade)
+
+To eliminate AI prototype slop ("rainbow badge soup", custom cartoon SVG silhouettes, heavy colored left borders, and toy circular steppers), every screen in HangarShopApp enforces the **Untitled UI React (`theme.css`) + Refactoring UI + `ConardLi/garden-skills` (`web-design-engineer`)** contract:
+
+### A. Untitled UI Token & Elevation Foundations (`index.css`)
+- **85%+ Calm Neutral Gray + 1 Brand Primary (`#155eef`):** The viewport is anchored by `#f9fafb` (`gray-50`) canvas, `#ffffff` primary surfaces, `#0c111d` (`gray-950`) navigation rail, `#101828` (`gray-900`) primary ink, `#667085` (`gray-500`) muted ink, and `1px` `#e4e7ec` (`gray-200`) hairlines.
+- **Skeuomorphic Button & Input Depth (`--shadow-xs-skeuomorphic`):**
+  - Primary action buttons (`.uui-btn-primary`): `background-color: #155eef; color: #ffffff; box-shadow: var(--shadow-xs-skeuomorphic);`
+  - Secondary action buttons (`.uui-btn-secondary`): `background-color: #ffffff; color: #344054; border: 1px solid #d0d5dd; box-shadow: var(--shadow-xs-skeuomorphic);`
+- **Typography & Monospace Discipline:** `Inter` (`font-variant-numeric: tabular-nums`) for all UI prose and aligned quantities; `JetBrains Mono` (`--font-mono`) strictly for raw identifiers (`TL-0157`, `LOT-2026-0412A`, `P/N`, `S/N`).
+
+### B. Untitled UI Component Contracts
+1. **`Badge type="modern"` (`<StatusPill />`):**
+   - Render status pills on a crisp white surface (`bg-white`), `1px` inset gray ring (`ring-1 ring-inset ring-gray-200`), `shadow-2xs`, dark neutral text (`text-gray-700` / `#344054`), `rounded-md`, and a **`6px` (`h-1.5 w-1.5`) semantic leading dot** (`#17b26a` green, `#f79009` amber, `#f04438` red, `#155eef` blue, `#6938ef` purple, `#98a2b3` gray).
+   - Never paint every table row with competing pastel rainbow pill backgrounds.
+2. **Unified Horizontal `<InputNumber />` Cycle-Count Stepper:**
+   - Replace giant coral-red `-` / neon-mint `+` circular buttons and thick `2px` blue boxes with Untitled UI's unified horizontal input group: `rounded-lg bg-white ring-1 ring-inset ring-gray-300 shadow-xs flex items-center overflow-hidden`.
+   - Left `-` and right `+` buttons use `text-gray-600 hover:bg-gray-50 border-r / border-l border-gray-200 px-3.5 h-10`, with a centered `font-mono tabular-nums` quantity input and unit label (`qt`, `cartridge`, `ea`), paired with a `Match Expected` secondary button.
+3. **4-Button Tool Condition Selector (Radio Button Group):**
+   - Replace saturated rainbow borders/fills with Untitled UI radio-group cards: inactive `bg-white ring-1 ring-inset ring-gray-300 shadow-xs text-gray-700 hover:bg-gray-50`; active `ring-2 ring-inset ring-blue-600 bg-blue-50/30 text-gray-900 shadow-xs` with a `6px` semantic dot.
+4. **`TableCard` Inventory Register:**
+   - Wrap the register table in an Untitled UI `TableCard` (`rounded-xl bg-white ring-1 ring-inset ring-[#e4e7ec] shadow-xs overflow-hidden`), with a `bg-gray-50/70` header row (`text-xs font-medium text-gray-500`), `1px` `#e4e7ec` row hairlines, a monochrome `@untitledui/icons` category icon in a `w-8 h-8 rounded-md bg-gray-50 ring-1 ring-inset ring-gray-200 text-gray-500` container inside the `Item` column, and `Badge type="modern"` status pills.
+
+### C. `web-design-engineer` + Refactoring UI Anti-Slop Ban List & 5-Point Critique Check
+- **Ban custom SVG clipart cartoons (`ItemThumbnail` silhouettes):** Never draw multi-path colored vector illustrations of wrenches, calipers, or sealant bottles. Use 4 monochrome `@untitledui/icons` stroke icons (`Tool02`, `Ruler`, `Beaker01`, `Package`) in a neutral `32×32` (`w-8 h-8`) gray container in register/detail headers, and **omit `<ItemThumbnail />` completely in middle checklist rows** so each row has a single clean left indicator (`<VerificationSquare />`).
+- **Ban `border-l-[3px]` colored left borders on rows and cards:** Remove `border-l-[3px] border-l-[#246cff]` (`web-design-engineer` banned cliché). Indicate active list rows with a clean Untitled UI surface fill (`bg-gray-100/90` / `bg-slate-100/90`) and subtle weight contrast (`font-semibold text-gray-900`).
+- **Ban solid colored checkboxes on normal rows:** Verified rows use a quiet neutral check square (`bg-gray-100 text-gray-700 ring-1 ring-inset ring-gray-300`); reserve red fills strictly for active overdue/expired blockers.
+- **Keep `Tweaks` collapsed by default (`demoPillExpanded = false`):** When collapsed, render only a tiny unobtrusive pill (`fixed bottom-3 right-3 bg-gray-900/80 text-white text-[11px] font-medium px-2.5 py-1 rounded-full shadow-sm`) so screenshots and user testing sessions look 100% like a shipped production app.
+- **Mandatory 5-Point Refactoring UI / `critique-guide.md` Verification Check:**
+  1. **Visual Hierarchy via Weight & Contrast:** Primary item titles use `font-medium`/`font-semibold` `#101828`; secondary metadata (`P/N`, `S/N`, drawer spot) uses `12px` `#667085` `tabular-nums`.
+  2. **Color Restraint (85%+ Neutral Gray):** Semantic hues appear only as `6px` dots inside `Badge type="modern"` pills and on critical quarantine/overdue alert banners.
+  3. **Single Left Row Indicator:** Middle checklist rows never stack `<VerificationSquare />` + `<ItemThumbnail />` and never use `border-l-[3px]` stripes.
+  4. **Crisp 1px Geometry & Skeuomorphic Controls:** All cards, tables, steppers, and buttons use `1px` `#e4e7ec`/`#d0d5dd` borders (`ring-1 ring-inset`) and `--shadow-xs-skeuomorphic`.
+  5. **Zero Prototype Chrome or Clipart Slop:** No custom SVG tool cartoons, no floating multi-button demo bars open by default, and zero truncated button labels at `1440×900`.
