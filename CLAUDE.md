@@ -1,6 +1,6 @@
 # HangarShopApp
 
-Read and follow `AGENTS.md` (ground rules), `CONTEXT.md` (domain glossary), `DESIGN.md` (Swiss-AS AMOS + Oxide Computer + IBM Carbon design system & the 6 anti-vibe-coding rules), and `docs/adr/` before any work. Skills are in `.claude/skills`.
+Read and follow `AGENTS.md` (ground rules), `CONTEXT.md` (domain glossary), `DESIGN.md` (Asset Panda + MaintainX design system with InvenTree location/lot hierarchy & the 6 anti-vibe-coding guardrails), and `docs/adr/` before any work. Skills are in `.claude/skills`.
 
 ## Notes
 
@@ -18,4 +18,4 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 
 ### Domain & design docs
 
-Single-context: `CONTEXT.md` (domain glossary), `DESIGN.md` (Swiss-AS AMOS + Oxide + IBM Carbon UI & anti-vibe-coding contract), and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+Single-context: `CONTEXT.md` (domain glossary), `DESIGN.md` (Asset Panda + MaintainX UI & anti-vibe-coding contract), and `docs/adr/` at the repo root. See `docs/agents/domain.md`.

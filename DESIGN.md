@@ -1,123 +1,145 @@
 # HangarShopApp Design System & Anti-Vibe-Coding Specification
 
-HangarShopApp is a precision operational instrument for aviation maintenance technicians, inspectors, and managers. Its visual architecture is anchored to three explicit references chosen by the product owner:
+HangarShopApp is a modern, high-density operational application for aviation maintenance technicians, inspectors, and managers. Its visual architecture is anchored to **Asset Panda + MaintainX** (with **InvenTree** location and lot hierarchy patterns), chosen by the product owner after reviewing real product screenshots:
 
-- **Primary Visual Anchor — Swiss-AS AMOS (`AMOSmobile/STORES` https://www.swiss-as.com/amosmobilestores & `AMOSmobile/EXEC` https://www.swiss-as.com/amosmobileexec):** Bordered aviation MRO inspection ledger and work-card form layout, shared-border metadata header block, line-item checkoff table, and industrial stores/tooling floor terminal feel.
-- **Secondary Structural & Typographic Anchors — Oxide Computer (https://oxide.computer/) + IBM Carbon Design System (https://www.carbondesignsystem.com/components/data-table/usage/):** `0px` sharp industrial corners (`2px` max on standalone hardware-key buttons), shared `1px solid` grid borders with zero gaps between containers, monospace schematic precision (`tabular-nums slashed-zero`), and ultra-clean hairline rows.
+> "I really like the asset panda + maintainX look, esp since we will prob expand into Work Orders down the road"
+
+### Primary Visual Anchors
+
+1. **MaintainX (`https://www.getmaintainx.com/`) — Execution Shell, 3-Pane Split View & Mobile Cycle-Count Flow:**
+   - **Desktop/Tablet 3-Pane Split View:** Dark-slate left navigation rail (`#0F172A` / `#1E293B`) + filterable middle item list + right execution/inspection detail pane.
+   - **Mobile Cycle-Count Flow:** Clean top header with `Checked items: X of Y` progress bar, large tactile `- / +` quantity steppers, and a prominent `Save & Count Next` blue primary CTA (`#2563EB`).
+   - **4-Up Tactile Square Status Selector Buttons:** Large gloved-hand-friendly square status cards with crisp icons (`Present / Serviceable`, `Wrong Location`, `Can't Find`, `Damaged / Unserviceable` in Release 1 audits—and later `Open`, `On Hold`, `In Progress`, `Done` when expanding into Work Orders in Release 2+).
+2. **Asset Panda (`https://www.assetpanda.com/`) — High-Density Asset & Inventory Registers:**
+   - **Two-Line Stacked Table Cells:** Each row packs two clean lines per column without horizontal clutter: (a) ID + item-type chip (`Tool` / `Lot`), (b) bold nomenclature + `P/N · S/N` (or `Lot · Expiry`) subtext, (c) on-hand/counted quantity + expected/variance subtext, (d) map-pin storage location path, and (e) a **single soft-fill semantic status pill with a leading dot**.
+   - **Dual-Rail Navigation (`Collections / Saved Views`):** Quick-filter views (`All Items`, `Due Soon`, `Overdue & Unserviceable`, `Quarantined`, `Needs Verification`) and saved location/category collections.
+   - **Tabbed Record Detail Pages:** Clean horizontal tabs (`Record details`, `Calibration / Lots`, `Usage & Activity`, `Audits`, `Attachments`) inside the detail pane or full record view.
+   - **Mobile Barcode Scan Overlay & Slim Offline Bar:** Native camera scan sheet with a clean reticle and a slim bottom offline status bar (`Working offline · N queued`).
+3. **InvenTree (`https://inventree.org/`) — Location & Lot Hierarchy Touches:**
+   - **Hierarchical Storage Location Breadcrumb & Tree:** `Hangar > Tool Crib > Cabinet > Drawer/Shelf` tree navigation with rollup item/lot counts and a top-right barcode/QR/print action cluster.
 
 Every UI pull request, prototype, and code review must enforce this specification.
 
 ---
 
-## 1. The 6 Anti-Vibe-Coding Rules (Mandatory Contract)
+## 1. The 6 Anti-Vibe-Coding Guardrails (Mandatory Contract)
 
-1. **Aviation Form / Ledger Framing (Swiss-AS AMOS pattern):**
-   Screens open with a bordered engineering form header block (`1px solid` shared-border cells, `0px` radius, `0px` gap) displaying document/screen code, location scope, mode, sync/outbox state, and operator/role — never floating consumer SaaS hero headers or stacked pastel callout banners.
-2. **Edge-to-Edge `0px` Shared-Border Hairline Grids (IBM Carbon + Oxide pattern):**
-   Never wrap list rows or table records in padded, rounded cards (`border-radius: 6px+`, `gap: 12px`). All lists and tables use continuous `1px solid` shared borders (`0px` outer margin, `0px` border-radius) with flush `26px–28px` section divider bars for child spots/drawers.
-3. **Zero Unicode Emojis Anywhere in the UI:**
-   Never use `🚨`, `⚠️`, `📷`, `🔦`, `✅`, or any Unicode emoji in badges, buttons, headers, or empty states. Use `12px–14px` `1.5px`-stroke geometric SVG vectors (octagon, triangle, diamond, crosshair, square) paired with 3-letter aviation status codes (`SVC`, `DUE`, `OVD`, `UNS`, `QRN`, `EXP`, `MSN`, `REF`, `RET`).
-4. **Quiet-When-Nominal Status Discipline:**
-   Nominal items (`SVC` / `SERVICEABLE`) render as quiet monochrome text + a subtle `6px` geometric mark with **no colored pill background**, so off-nominal states (`OVD` / `UNS` / `QRN` / `EXP` in high-contrast red; `DUE` / `PND` / `CAL` in industrial amber) command 100% of visual attention.
-5. **No Multi-Box KPI Summary Tile Grids:**
-   Never render 2x2 or 4-up rounded "stat cards" with oversized numbers above a table. Summarize counts inline inside a single flush `32px` shared-border toolbar/filter strip (`ALL [26] · D1 [6/6] · D2 [2/8] | TOOLS [19] · LOTS [7] · UNCHECKED [12]`).
-6. **Sharp Industrial Geometry (`0px`–`2px` max) & Monospace Technical Data:**
-   Tables, panels, headers, inputs, and status tags use `0px` corners (at most `2px` on standalone hardware-key action buttons). Every Tool ID, P/N, S/N, batch/lot, tail, work order, quantity+unit, date, and cert number uses `--font-mono` with `tabular-nums slashed-zero`.
+**No SaaS Landing-Page Slop AND No Fake Terminal Cosplay:**
 
-### Additional Hard Prohibitions
-- **No decorative gradients, glowing blobs, or mesh backgrounds.** Surfaces are solid, flat, high-contrast neutral tokens.
-- **No glassmorphism (`backdrop-blur`) or heavy drop shadows (`shadow-lg`, `shadow-xl`).** Structure is communicated strictly via `1px solid` shared grid hairlines and surface contrast.
-- **No colour-only status indicators.** Every status tag combines a geometric vector mark + explicit 3-letter aviation code (with full status label on wide viewports).
-- **No fake marketing copy, conversational AI filler, or celebratory fluff.** Labels are terse, literal aviation maintenance terms from `CONTEXT.md`.
+1. **100% Proportional Sans-Serif (`Inter` / System Sans) in Normal Sentence/Title Case:**
+   Never set headers, buttons, tabs, descriptions, or status badges in all-caps monospace (`JetBrains Mono` / `Courier`). Use `font-variant-numeric: tabular-nums` on `Inter` for aligned numbers, quantities, and dates, and use monospace or medium tabular sans strictly for raw technical identifiers (`TL-0142`, `LOT-2024-88A`, `/q/K7M2QX`).
+2. **No Fake Terminal Chrome:**
+   No `[F1]/[F2]/[F3]` function-key labels on touch tabs, no `MSG 16:20` syslog tickers, and no 6-box ASCII-style stamp headers eating mobile screen height.
+3. **No Marketing Card Slop or Emoji Soup:**
+   Zero Unicode emojis anywhere in the UI (use crisp Lucide / geometric SVG icons), no decorative gradient hero cards, no glassmorphism/glowing blobs, and no multi-row KPI stat-card grids pushing tables below the fold.
+4. **Clean, Utilitarian Enterprise Geometry:**
+   `6px–8px` subtle border radius on cards, buttons, and inputs; `1px solid #E2E8F0` (`#1E293B` in dark mode) table hairlines; `#FFFFFF` primary surfaces over `#F8FAFC` light-slate canvas; `#0F172A` / `#1E293B` dark-slate left navigation sidebar; MaintainX Blue (`#2563EB`) primary interactive accent and Asset Panda Teal (`#0D9488` / `#10B981`) verified/complete accent.
+5. **One Semantic Status Pill Per Row:**
+   Render a single soft-fill, high-contrast status pill with a leading dot per row (`Serviceable` green/slate, `Due Soon` amber, `Overdue` red, `Quarantined` red, `Expired` red)—never 3 competing badges on the same row. Secondary metadata (such as `Due in 14d` or `Pending cert`) belongs in the stacked cell subtext.
+6. **Work Orders Expansion Readiness:**
+   The dark-slate left navigation rail and 3-pane split-view architecture (`List -> Detail / Execution Pane`) are structured so `Work Orders` (linking tools, consumable lot draws, discrepancies, and aircraft tail numbers) slots directly into the same MaintainX-style shell in a future release without redesigning the application frame.
 
 ---
 
-## 2. Typography & Schematic Monospace Discipline
+## 2. Typography & Tabular Numerics
 
-- **UI Sans (`--font-sans`):** `Inter` or `IBM Plex Sans` (`-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`) for prose descriptions, notes, and column/form labels.
-- **Technical Monospace (`--font-mono`):** `JetBrains Mono` or `IBM Plex Mono` (`ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`) with `font-variant-numeric: tabular-nums slashed-zero` enforced across all technical cells.
-- **Mandatory `--font-mono` (`tabular-nums slashed-zero`) Fields:**
-  - Document / screen codes (`FORM MX-AUD-01`, `REG-TL-01`, `MAT-LOT-01`)
-  - `tool_id` (`TL-014`, `TRQ-04`)
-  - Part numbers (`P/N`), model numbers, and serial numbers (`S/N`)
-  - Lot / batch numbers (`LOT-2026-089`, `LOT-IMPORT-012`)
-  - Aircraft tail numbers (`N123AB`), major component S/Ns, and contract numbers
-  - Work order numbers (`WO-2026-1042`)
-  - All dates and timestamps (`2026-10-31`, `2026-10-22 17:10 UTC-7`)
-  - Quantities with units (`14.5 oz`, `2 each`), calibration intervals (`12 MO`, `180 D`), and airframe/engine hours, landings, and cycles (`4,182.4 HRS / 2,910 CYC`)
-  - Certificate numbers, inline toolbar counters (`[19]`, `[2/8]`), and QR short codes (`/q/K7M2QX`)
+- **Primary UI Font (`--font-sans`):** `Inter`, `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif` across all headings, navigation items, table cells, form labels, buttons, tabs, and status pills in normal **Sentence case** or **Title Case**.
+- **Numeric Alignment:** Apply `font-variant-numeric: tabular-nums` globally to table columns, quantities, steppers, counters, dates, and airframe/component hours and cycles so vertical columns align cleanly without switching the UI to a terminal font.
+- **Technical Identifier Token (`--font-id`):** Use `Inter` medium (`font-weight: 500`, `tabular-nums`) or subtle inline code styling (`JetBrains Mono` / `ui-monospace` at `12px–13px`, normal case) **strictly** for raw identifiers:
+  - Tool IDs (`TL-0142`, `TRQ-004`)
+  - Part numbers (`P/N`) and serial numbers (`S/N`)
+  - Batch / lot numbers (`LOT-2026-089`)
+  - Aircraft tail numbers (`N123AB`), work order numbers (`WO-2026-1042`), and opaque QR short codes (`/q/K7M2QX`)
 - **Type Scale & Hierarchy:**
-  - Form header title / screen ID: `14px–16px`, `font-weight: 600`, uppercase/monospace metadata cells
-  - Section divider / table column header / metadata key: `11px` (`0.6875rem`), `font-weight: 600`, uppercase, `letter-spacing: 0.06em`, muted slate
-  - Table cell & ledger row body: `13px` (`0.8125rem`), line-height `1.3` on desktop; `15px–16px` on phone inputs to prevent iOS auto-zoom
+  - Page / Pane Title: `18px–20px` (`font-weight: 600`, `-0.01em` tracking, `#0F172A`)
+  - Section Title / Drawer Header: `14px–15px` (`font-weight: 600`, Sentence/Title Case)
+  - Table Primary Line (Nomenclature / Item Title): `14px` (`font-weight: 600`, `#0F172A`)
+  - Table Secondary Subtext (`P/N · S/N`, `Expected qty`, `Cal due date`): `12px` (`font-weight: 400`, `#64748B`, `tabular-nums`)
+  - Table Column Header: `12px` (`font-weight: 600`, `#475569`, Sentence case)
+  - Mobile Inputs & Steppers: `16px+` (`font-weight: 500` on inputs, `20px–24px` `font-weight: 600` on cycle-count quantity steppers) to prevent iOS auto-zoom and support gloved operation.
 
 ---
 
-## 3. Color System & Quiet-When-Nominal Status Tokens
+## 3. Color System & Single Semantic Status Pills
 
-Designed for bright sunlit hangar bays (High-Contrast Daylight Ledger, default) and dim cockpit/night shift environments (Industrial Dark Terminal):
+Designed for bright hangar bays (Clean Daylight Slate default) with an optional Dark Slate mode for night shifts and cockpit work:
 
-### Structural Surfaces (Daylight Ledger Default)
-- **App Canvas:** `#E2E8F0` (`slate-200`)
-- **Primary Ledger / Table Surface:** `#FFFFFF`
-- **Form Header / Section Bar / Toolbar Surface:** `#F1F5F9` (`slate-100`)
-- **Sub-Spot / Drawer Divider Bar (`26px–28px`):** `#E2E8F0` (`slate-200`) with `#0F172A` monospace title
-- **Shared Grid Hairline Border (`1px solid`):** `#94A3B8` (`slate-400`) on outer form frames and section dividers; `#CBD5E1` (`slate-300`) on internal row hairlines
+### Structural Surfaces & Accents
+- **Left Navigation Rail (MaintainX / Asset Panda Dark Slate):** `#0F172A` (`slate-900`) background, `#1E293B` (`slate-800`) active item fill, `#F8FAFC` active text, `#94A3B8` inactive text, `#3B82F6` active left indicator bar.
+- **App Canvas Background:** `#F8FAFC` (`slate-50` in light mode) / `#0B0F19` (in dark mode)
+- **Primary Card / Table / Pane Surface:** `#FFFFFF` (light mode) / `#111827` (dark mode)
+- **Subtle Header / Group Bar Surface:** `#F1F5F9` (`slate-100` in light mode) / `#1E293B` (dark mode)
+- **Table & Card Hairlines (`1px solid`):** `#E2E8F0` (`slate-200` in light mode) / `#1E293B` (`slate-800` in dark mode)
+- **Primary Interactive Accent (MaintainX Blue):** `#2563EB` (`blue-600`), hover `#1D4ED8` (`blue-700`), soft selection tint `#EFF6FF` (`blue-50`)
+- **Verified / Complete Accent (Asset Panda Teal / Emerald):** `#0D9488` (`teal-600`) / `#10B981` (`emerald-500`)
 - **Primary Ink:** `#0F172A` (`slate-900`)
-- **Secondary / Metadata Key Ink:** `#475569` (`slate-600`)
-- **Hardware Action Key Accent:** `#0F172A` (`slate-900`) primary; `#1D4ED8` (`blue-700`) focused/active operational action
+- **Secondary Subtext Ink:** `#475569` (`slate-600`) and `#64748B` (`slate-500`)
 
-### 3-Letter Aviation Status Codes & Quiet-When-Nominal Contract
+### Semantic Status Pills (`<StatusPill />` — One Pill Per Row)
 
-Every status uses the locked `<StatusBadge />` primitive (`0px` corner radius, `12px–14px` `1.5px`-stroke SVG vector + 3-letter code in `--font-mono`):
+Every row displays **at most one** semantic status pill (`border-radius: 9999px` or `6px`, `padding: 2px 10px`, `12px` `Inter` `font-weight: 500`, soft background fill, `1px solid` subtle semantic border, and a `6px` leading status dot):
 
-| 3-Letter Code | Full Domain Status | Visual Treatment (Quiet-When-Nominal Rule) | Vector Mark (`1.5px` stroke) |
-| :--- | :--- | :--- | :--- |
-| `SVC` / `SAT` | `Serviceable` / `SAT` | **Quiet monochrome:** transparent fill, no border pill, `#334155` mono text + `#0F172A` `6px` solid square/check mark | `6px` solid square or crisp check |
-| `REF` | `Reference-only` | **Quiet monochrome:** `#F8FAFC` fill, `1px dashed #64748B`, `#334155` mono text (`REF · REFERENCE ONLY`) | Crosshair / info square |
-| `DUE` | `Due soon` (badge) | **Industrial Amber:** `#FEF3C7` fill, `#92400E` text, `1px solid #D97706` | Diamond (`◇`) |
-| `PND` | `Pending verification` | **Industrial Amber:** `#FEF3C7` fill, `#92400E` text, `1px solid #D97706` | Triangle (`△`) |
-| `CAL` | `Needs cal` / `Out for cal` | **Industrial Amber / Transit Blue:** `#EFF6FF` fill, `#1E40AF` text, `1px solid #2563EB` | External arrow / diamond |
-| `OVD` | `Overdue` | **High-Contrast Alert Red:** `#FEE2E2` fill, `#991B1B` bold mono text, `1px solid #DC2626` | Octagon (`⯃`) |
-| `UNS` / `UNSAT` | `Unserviceable` / `UNSAT` | **High-Contrast Alert Red:** `#FEE2E2` fill, `#991B1B` bold mono text, `1px solid #DC2626` | Octagon with slash |
-| `EXP` | `Expired` | **High-Contrast Alert Red:** `#FEE2E2` fill, `#991B1B` bold mono text, `1px solid #DC2626` | Octagon (`⯃`) |
-| `QRN` | `Quarantined` | **High-Contrast Alert Red:** `#FFE4E6` fill, `#9F1239` bold mono text, `1px solid #E11D48` | Triangle-lock |
-| `MSN` | `Missing` | **High-Contrast Alert Red:** `#FFE4E6` fill, `#9F1239` bold mono text, `1px solid #E11D48` | Crosshair-off / octagon |
-| `RET` / `RTN` / `DEP` / `DSP` / `N/A` | `Retired` / `Returned` / `Depleted` / `Disposed` / `N/A` | **Muted Historical:** transparent fill, `#64748B` mono text, `1px solid #CBD5E1` | Minus-square (`⊟`) |
+| Domain Status | Pill Label (Normal Case) | Surface & Border (Light Mode) | Text & Leading Dot | Subtext / Secondary Context |
+| :--- | :--- | :--- | :--- | :--- |
+| `Serviceable` / `Present / Serviceable` | `Serviceable` | `#ECFDF5` fill, `1px solid #A7F3D0` | `#065F46` text, `#10B981` dot | Cal due date or expiry in stacked subtext |
+| `Reference-only` | `Reference Only` | `#F1F5F9` fill, `1px solid #CBD5E1` | `#334155` text, `#64748B` dot | Excluded from cal due lists |
+| `Due soon` (within shop window) | `Due Soon` | `#FFFBEB` fill, `1px solid #FDE68A` | `#92400E` text, `#F59E0B` dot | Shows `Due in Xd (YYYY-MM-DD)` in subtext |
+| `Pending verification` | `Pending Verification` | `#FFFBEB` fill, `1px solid #FDE68A` | `#92400E` text, `#F59E0B` dot | Awaiting Cal Designee review |
+| `Needs cal` / `Out for cal` | `Out for Cal` | `#EFF6FF` fill, `1px solid #BFDBFE` | `#1E40AF` text, `#3B82F6` dot | Vendor & expected return date in subtext |
+| `Overdue` | `Overdue` | `#FEF2F2` fill, `1px solid #FECACA` | `#991B1B` text, `#EF4444` dot | Blocks usage logging; red warning banner in detail |
+| `Unserviceable` / `Damaged` | `Unserviceable` | `#FEF2F2` fill, `1px solid #FECACA` | `#991B1B` text, `#EF4444` dot | Blocks usage logging; reason shown in subtext |
+| `Quarantined` | `Quarantined` | `#FEF2F2` fill, `1px solid #FECACA` | `#991B1B` text, `#EF4444` dot | Segregated lot; blocks material draw |
+| `Expired` | `Expired` | `#FEF2F2` fill, `1px solid #FECACA` | `#991B1B` text, `#EF4444` dot | Past effective expiry (`lot` or `opened_life_days`) |
+| `Missing` | `Missing` | `#FFF1F2` fill, `1px solid #FECDD3` | `#9F1239` text, `#F43F5E` dot | Routed to `Unassigned` / `Needs attention` |
+| `Retired` / `Returned` / `Depleted` / `Disposed` | `Retired` / `Depleted` | `#F8FAFC` fill, `1px solid #E2E8F0` | `#64748B` text, `#94A3B8` dot | Historical read-only record |
 
 ---
 
 ## 4. Screen Anatomy & Responsive Architecture
 
-### A. Swiss-AS AMOS Shared-Border Form Header Block (All Viewports)
-Every screen opens with a flush, shared-border engineering metadata grid (`0px` radius, `1px solid #94A3B8` outer frame, `1px solid #CBD5E1` cell dividers):
-- **Cell 1 (Form / Screen Code & Title):** e.g., `MX-AUD-LOC // GUIDED LOCATION AUDIT` or `MX-REG-TL // CALIBRATED TOOL REGISTER`
-- **Cell 2 (Scope / Location Path):** e.g., `LOC: H1 › CRIB › CAB-B`
-- **Cell 3 (Sync / Outbox Telemetry):** e.g., `SYNC: ONLINE [0 QUEUED]` or `SYNC: OFFLINE [4 FINDINGS IN OUTBOX]`
-- **Cell 4 (Operator & Authority Flags):** e.g., `OPR: J. MILLER [MECH]` or `OPR: C. WILLIAMS [ADM · CAL-DES · AUD]`
+### A. Desktop & Tablet Landscape (`>= 1024px`) — MaintainX 3-Pane Split View + Asset Panda High-Density Register
+1. **Left Navigation Rail (`240px` desktop / `64px` collapsed tablet, `#0F172A` dark slate):**
+   - **Shop Switcher Header:** Active Shop name, role badge (`Admin`, `Inspector`, `Mechanic`), and online/sync indicator.
+   - **Primary Navigation Items (Lucide SVG icons + normal-case labels):**
+     - `Dashboard`
+     - `Tools & Calibration`
+     - `Consumables & Lots`
+     - `Locations` (InvenTree hierarchical tree)
+     - `Audits & Cycle Counts`
+     - `Fleet & Programs`
+     - `Work Orders` *(Release 2+ slot — architecture ready)*
+     - `Import & Settings`
+   - **Optional Secondary Rail (`Collections / Saved Views`, Asset Panda pattern):** Quick filters for location subtrees (`Hangar 1 > Tool Crib > Cabinet B`) or saved compliance views.
+2. **Primary Workspace — Two High-Productivity Modes:**
+   - **Mode 1: Asset Panda High-Density Register Table (Full-Width or With Docked Detail Drawer):**
+     - Top breadcrumb (`Hangar 1 › Tool Crib › Cabinet B`), search bar, compact filter pills (`All (26)`, `Tools (19)`, `Consumables (7)`, `Due Soon (3)`, `Overdue (1)`), and InvenTree-style top-right action cluster (`Scan QR`, `Print Labels`, `Export CSV`, `+ New Tool / Lot`).
+     - **Two-Line Stacked Table Cells (`52px–60px` row height, `1px solid #E2E8F0` hairlines):**
+       1. **ID & Type Column:** `TL-0142` (`--font-id`) + subtle `Tool` or `Lot` chip.
+       2. **Item & Spec Column:** Bold nomenclature (`Snap-on Digital Torque Wrench 1/2"`) on line 1; `P/N ATECH3FR250B · S/N 09218472` on line 2.
+       3. **Quantity / Calibration Column:** `1 each` or `14.5 oz` on line 1; `Expected: 16.0 oz (-1.5 oz)` or `Cal Due: Oct 31, 2026` on line 2.
+       4. **Location Column:** Map-pin SVG icon + `Crib › Cab B › Drawer 1`.
+       5. **Status Column:** Single `<StatusPill />` (`Serviceable`, `Due Soon`, `Overdue`, `Quarantined`, `Expired`).
+   - **Mode 2: MaintainX 3-Pane Split View (`List Pane 380px–420px` + `Execution / Detail Pane 1fr`):**
+     - Used for **Guided Location Audits**, **Monthly Reviews**, **Calibration Verification**, and future **Work Orders**.
+     - Left/middle list pane shows scannable two-line item rows grouped by child location (`Drawer 1 — Torque Wrenches (6/6)`) with a `Checked items: 14 of 26` progress bar.
+     - Right detail/execution pane shows the selected item's inspection controls, tabbed record details (`Record details`, `Calibration / Lots`, `Usage & Activity`, `Audits`, `Attachments`), or the official audit sign-off & PDF preview.
 
-Immediately below the header block sits a single **Flush `32px` Shared-Border Filter & Inline Counter Strip**:
-- Example: `ALL [26] · D1 [6/6] · D2 [2/8] · D3 [0/12]  |  TYPE: ALL · TOOLS [19] · LOTS [7]  |  REMAINING [12]`
-- Zero multi-box KPI stat cards above the table.
-
-### B. Desktop Monitor (`>= 1200px`) — MRO Workstation
-- **Left Terminal Rail (`200px–220px` fixed, `0px` radius, `1px solid` right border):** Shop Switcher cell at top, compact navigation rows with monospace section codes, and active operator/flag block in the footer.
-- **Edge-to-Edge Shared-Border Data Table (`34px–38px` row height):** Continuous `1px solid` horizontal and vertical cell hairlines (`IBM Carbon` / `Oxide` style), sticky header bar, flush `26px–28px` location/group divider rows, keyboard arrow navigation, and a right-hand shared-border inspection pane (`480px–540px`) that docks flush against the table without floating drop-shadow modals.
-
-### C. Tablet / Cart Mode (`768px–1199px`) — Crib & Bench Terminal
-- Compact `56px` rail or top shared-border command bar + split-pane ledger table and inspection drawer.
-
-### D. Phone / Hangar Floor (`< 768px`) — `AMOSmobile` Gloved Execution
-- **Edge-to-Edge Hairline Checkoff Rows (`0px` outer margin, `0px` radius, `48px–56px` tall):**
-  - Each row is a flush shared-border cell divided into:
-    1. **Left Monospace ID + Status Cell:** `TL-014` / `LOT-089` + `SVC` / `OVD` / `DUE` tag
-    2. **Center Nomenclature & Spec Cell:** Item name, `P/N`, `S/N` or `DOE`, expected qty/unit
-    3. **Right Gloved Checkoff / Action Cell (`48px+` touch target):** Hardware-key buttons (`[SAT]` / `[CNT]` / `[FLAG]`, `0px–2px` max radius, `1px solid` border)
-  - Grouped by flush `26px–28px` child-spot divider bars (`DRAWER 1 — TORQUE WRENCHES [6/6]`, `DRAWER 2 — SEALANTS & ADHESIVES [2/8]`).
-- **Bottom Hardware Command Dock (`0px` radius, `1px solid` top border):**
-  - Full-width docked hardware keys for `[SCAN QR]`, `[MANUAL ID]`, `[+ UNRECORDED]`, and `[SIGN & CLOSE AUDIT]`.
-- **Flush Lot Count & Discrepancy Drawer:**
-  - Tapping a Consumable Lot or `[FLAG]` opens a sharp-bordered bottom ledger panel (`0px` radius) with large `tabular-nums slashed-zero` quantity display in the lot's stock unit, hardware-key `[-]` / `[+]` steppers, `[MATCHES EXP]`, and immediate safety-flag selectors (`[CAN'T FIND -> MSN]`, `[DAMAGED -> UNS/QRN]`, `[WRONG LOC]`).
+### B. Phone & Tablet Portrait (`< 1024px`) — MaintainX Mobile Cycle-Count & Asset Panda Scanner
+1. **Compact Mobile Header (No Multi-Box ASCII Stamp):**
+   - Clean 2-row header (`56px–72px` total): Back arrow + Location title (`Cabinet B — Torque & Sealants`) + `Scan QR` icon button on row 1; `Checked items: 14 of 26` linear progress bar (`#2563EB` fill, `#10B981` when complete) + filter pills (`All`, `Remaining (12)`, `Tools`, `Lots`) on row 2.
+2. **MaintainX Mobile Execution Card / Drawer:**
+   - **For Tools (4-Up Tactile Square Status Selector Grid):**
+     - Four large (`>= 64px` tall, `8px` radius) tactile square selector buttons in a 2x2 or 4-up grid with crisp SVG icons:
+       1. `Present / Serviceable` (Teal/Emerald active border & fill `#ECFDF5`)
+       2. `Wrong Location` (Amber/Blue prompt with one-tap `Move to this location now`)
+       3. `Can't Find` (Red/Rose flag -> routes to `Missing` / `Unassigned`)
+       4. `Damaged / Unserviceable` (Red flag -> immediate `Unserviceable` with reason note)
+   - **For Consumable Lots (Tactile Quantity Stepper Card):**
+     - Displays expected quantity and stock unit (`Expected: 12 tubes`), large `-` and `+` stepper buttons (`48px x 48px`, `8px` radius), direct numeric input (`tabular-nums`), quick `Matches Expected` chip, and condition selector (`Serviceable`, `Damaged / Suspect -> Quarantined`, `Can't Find / 0`).
+   - **Primary Bottom CTA:** Full-width `48px` MaintainX Blue button (`Save & Count Next`).
+3. **Asset Panda Barcode/QR Scan Overlay & Slim Bottom Offline Bar:**
+   - Camera viewfinder sheet (`getUserMedia` + `BarcodeDetector` WASM) with rounded reticle frame, torch toggle, and manual ID search box.
+   - When offline or syncing, a **slim `32px` bottom status bar** docks cleanly at the bottom edge: `Working offline · 4 findings queued in outbox` (amber dot) or `All changes synced` (teal dot).
 
 ---
 
@@ -125,11 +147,11 @@ Immediately below the header block sits a single **Flush `32px` Shared-Border Fi
 
 Before building individual feature screens, developers must implement and reuse these eight canonical primitives:
 
-1. **`<AmosFormHeader />`**: Shared-border engineering metadata header block (`0px` radius, `1px solid` cell grid) displaying screen code, scope/path, sync/outbox telemetry, and operator/role flags.
-2. **`<InlineCounterStrip />`**: Flush `32px` shared-border toolbar combining spot/drawer progress counters and filter toggles (`ALL [26] · D1 [6/6] | TOOLS [19] · LOTS [7]`)—replacing all multi-box KPI cards.
-3. **`<StatusBadge code={...} />`**: Enforces the Quiet-When-Nominal rule, `0px` corners, `12px–14px` `1.5px`-stroke geometric SVG vector, and 3-letter aviation status code (`SVC`, `DUE`, `OVD`, `UNS`, `QRN`, `EXP`, `MSN`, `REF`, `RET`).
-4. **`<MonoId value={...} copyable />`**: Renders technical IDs, P/Ns, S/Ns, lot numbers, tails, work orders, dates, and quantities in `--font-mono` with `tabular-nums slashed-zero`.
-5. **`<HairlineLedgerTable />`**: Continuous `1px solid` shared-border table/list (`0px` outer margin, `0px` radius) with flush `26px–28px` section divider bars and docked detail pane support.
-6. **`<ScanCommandDock />`**: Bottom hardware-key bar + camera viewfinder (`getUserMedia` + `BarcodeDetector` WASM with SVG crosshair reticle, SVG torch toggle, and manual ID search input).
-7. **`<ComplianceSignoffBlock />`**: Shared-border sign-off ledger block capturing typed full name, authenticated login, certificate type & number (or explicit `N/A`, never blank), optional drawn signature canvas, auditor independence attestation, and timestamp.
-8. **`<HelperDisclaimerBanner />`**: Flush `1px solid` footer/header compliance strip on sign-off screens and printed Audit PDFs stating: `INTERNAL COMPLIANCE HELPER RECORD — NOT AN FAA-AUTHORIZED ELECTRONIC RECORDKEEPING OR ELECTRONIC SIGNATURE SYSTEM.`
+1. **`<AppShellNav />`**: Dark-slate MaintainX/Asset Panda left navigation rail (`#0F172A`) with Shop Switcher, role badge, primary navigation links (including the future `Work Orders` slot), and optional secondary `Collections / Saved Views` rail.
+2. **`<SplitViewWorkspace />`**: MaintainX 3-pane responsive layout container combining the filterable item/audit list pane (with `Checked items: X of Y` progress header) and the right-hand execution/detail pane with tabbed sections (`Record details`, `Calibration / Lots`, `Usage & Activity`, `Audits`, `Attachments`).
+3. **`<StackedRegisterTable />`**: Asset Panda high-density data table (`1px solid #E2E8F0` hairlines, `6px–8px` outer card radius) enforcing two-line stacked cells (`ID + type chip`, `Nomenclature + P/N · S/N`, `Qty/Cal + Expected/Variance`, `Map-pin Location`, and a single `<StatusPill />`).
+4. **`<StatusPill status={...} />`**: Single soft-fill semantic status pill per row with a `6px` leading dot in normal Sentence/Title Case (`Serviceable`, `Reference Only`, `Due Soon`, `Pending Verification`, `Out for Cal`, `Overdue`, `Unserviceable`, `Quarantined`, `Expired`, `Missing`).
+5. **`<TactileStatusGrid />`**: MaintainX 4-up tactile square status selector buttons (`6px–8px` radius, SVG icon + normal-case label) for tool audit checks (`Present / Serviceable`, `Wrong Location`, `Can't Find`, `Damaged / Unserviceable`) and future Work Order status transitions (`Open`, `On Hold`, `In Progress`, `Done`).
+6. **`<CycleCountStepperCard />`**: Mobile/tablet lot counting card with large `- / +` tactile steppers, stock-unit badge, live variance delta (`tabular-nums`), and `Save & Count Next` primary blue CTA (`#2563EB`).
+7. **`<BarcodeScannerSheet />` & `<OfflineOutboxBar />`**: Asset Panda camera barcode/QR scanner overlay + slim bottom offline sync bar (`Working offline · N queued`).
+8. **`<ComplianceSignoffBlock />` & `<HelperDisclaimerBanner />`**: Structured sign-off card capturing typed full name, authenticated login, certificate type & number (or explicit `N/A`, never blank), optional drawn signature canvas, auditor independence attestation, and the explicit compliance helper disclaimer (`Internal compliance helper record — not an FAA-authorized electronic recordkeeping or electronic signature system`).
