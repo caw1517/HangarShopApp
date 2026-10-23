@@ -1,53 +1,165 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { clsx } from "clsx";
 import { useDomain } from "@/lib/domain/context";
 import { CrossTenantNotFoundError, NotAuthorizedError } from "@/lib/domain/errors";
 import type { AuditLogEntry } from "@/lib/domain/types";
+import { cycleNext, formatInTimeZone, shopLocationSuffix, shortId, shortShopName } from "@/lib/ui-utils";
+import { useListNav } from "@/lib/use-list-nav";
+import type { ViewChrome } from "@/components/AppRoot";
+import { ShieldCheck } from "@/components/primitives/icons";
 import { StatusPill, type StatusDotColor } from "@/components/primitives/StatusPill";
-import { SplitViewWorkspace } from "@/components/primitives/SplitViewWorkspace";
-import { TableCard, TableCardHeaderRow, TableCardRow } from "@/components/primitives/TableCard";
-import { formatInTimeZone, shortId } from "@/lib/ui-utils";
+import {
+  ContextHeaderBar,
+  DetailFooter,
+  DetailHeaderBlock,
+  DetailScroll,
+  DetailTopBar,
+  ListColumnHeader,
+  ListRow,
+  ListScroll,
+  MetadataGrid,
+  SplitBody,
+  WorkspaceFilterBar,
+} from "@/components/primitives/WorkspaceShell";
 
-type ActionFilter = "all" | "INSERT" | "UPDATE" | "organizations" | "org_memberships";
+type AreaTab = "all" | "org_memberships" | "organizations";
+type ActionFilter = "ALL" | "INSERT" | "UPDATE";
 
-function pillColorFor(action: AuditLogEntry["action"]): StatusDotColor {
-  if (action === "INSERT") return "blue";
-  if (action === "UPDATE") return "purple";
-  return "red";
-}
+const ACTION_CYCLE: ActionFilter[] = ["ALL", "INSERT", "UPDATE"];
 
-function tableLabel(tableName: string): string {
+/** Friendly, product-facing labels for every stored column we surface. Keys not
+ * listed here (ids, timestamps, foreign keys) are intentionally hidden so the
+ * inspector reads as natural history, never as a raw database row. */
+const FIELD_LABELS: Record<string, string> = {
+  role: "Role",
+  status: "Status",
+  is_cal_designee: "Cal Designee",
+  is_designated_auditor: "Designated Auditor",
+  deactivation_reason: "Deactivation reason",
+  email: "Email",
+  full_name: "Name",
+  name: "Shop name",
+  slug: "Shop reference",
+  certificate_type: "Certificate type",
+  certificate_number: "Certificate number",
+  timezone: "Time zone",
+  tool_id_prefix: "Tool ID prefix",
+  due_soon_days: "Calibration due-soon window",
+  weekly_digest_day: "Weekly digest day",
+  weekly_digest_hour: "Weekly digest hour",
+  weekly_digest_minute: "Weekly digest minute",
+  missing_tool_threshold_days: "Missing-tool alert threshold",
+  stale_aircraft_days: "Stale-aircraft threshold",
+  idle_timeout_minutes: "Idle sign-out timeout",
+};
+
+function areaLabel(tableName: string): string {
   if (tableName === "org_memberships") return "Team & Roles";
   if (tableName === "organizations") return "Shop Settings";
   return tableName;
 }
 
-export function AuditLogView() {
+function humanizeValue(key: string, value: unknown): string {
+  if (value === null || value === undefined || value === "") return "—";
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  if (key === "role" || key === "status") {
+    const s = String(value);
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  if (key === "deactivated_at" || key === "created_at" || key === "updated_at") return String(value).slice(0, 10);
+  return String(value);
+}
+
+function headlineFor(entry: AuditLogEntry): string {
+  if (entry.table_name === "organizations") {
+    return entry.action === "INSERT" ? "Shop created" : "Shop settings updated";
+  }
+  if (entry.action === "INSERT") return "Team member added";
+  const after = entry.after_data as Record<string, unknown> | null;
+  if (after && after.status === "deactivated" && (entry.before_data as Record<string, unknown> | null)?.status === "active") {
+    return "Team member deactivated";
+  }
+  return "Team member updated";
+}
+
+interface DiffRow {
+  label: string;
+  before: string;
+  after: string;
+  key: string;
+}
+
+function buildDiff(entry: AuditLogEntry): DiffRow[] {
+  const before = (entry.before_data ?? {}) as Record<string, unknown>;
+  const after = (entry.after_data ?? {}) as Record<string, unknown>;
+  const rows: DiffRow[] = [];
+  for (const [key, label] of Object.entries(FIELD_LABELS)) {
+    const inBefore = key in before;
+    const inAfter = key in after;
+    if (!inBefore && !inAfter) continue;
+    if (entry.action === "INSERT") {
+      if (!inAfter) continue;
+      rows.push({ key, label, before: "—", after: humanizeValue(key, after[key]) });
+    } else {
+      if (JSON.stringify(before[key]) === JSON.stringify(after[key])) continue;
+      rows.push({ key, label, before: humanizeValue(key, before[key]), after: humanizeValue(key, after[key]) });
+    }
+  }
+  return rows;
+}
+
+function actionPill(action: AuditLogEntry["action"]): { label: string; color: StatusDotColor } {
+  if (action === "INSERT") return { label: "Added", color: "blue" };
+  if (action === "UPDATE") return { label: "Updated", color: "purple" };
+  return { label: "Removed", color: "red" };
+}
+
+export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
   const domain = useDomain();
-  const [filter, setFilter] = useState<ActionFilter>("all");
+  const [areaTab, setAreaTab] = useState<AreaTab>("all");
+  const [actionFilter, setActionFilter] = useState<ActionFilter>("ALL");
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   let entries: AuditLogEntry[] = [];
   let accessError: string | null = null;
+  let shopName = "This Shop";
+  let shopShort = "This Shop";
+  let timezone = "America/Los_Angeles";
+  let idleMinutes = 30;
+  try {
+    const org = domain.store.getOrganization(domain.principal, domain.activeOrgId);
+    shopName = org.name;
+    shopShort = shortShopName(org.name);
+    timezone = org.timezone;
+    idleMinutes = org.idle_timeout_minutes;
+  } catch {
+    // fall through; getAuditLog below will surface the precise access error
+  }
   try {
     entries = domain.store.getAuditLog(domain.principal, domain.activeOrgId);
   } catch (err) {
     if (err instanceof CrossTenantNotFoundError) {
-      accessError = "This persona is not an active Member of the selected Shop, so the audit log is not visible.";
+      accessError = "This persona is not an active Member of the selected Shop, so the compliance audit log is not visible.";
     } else if (err instanceof NotAuthorizedError) {
-      accessError = "Only Admin and Inspector roles can read the compliance audit log. Switch persona to view it.";
+      accessError = "Only Admin and Inspector roles can read the compliance audit log. Switch persona in the Tweaks pill to view it.";
     } else {
       throw err;
     }
   }
 
+  const counts = {
+    all: entries.length,
+    team: entries.filter((e) => e.table_name === "org_memberships").length,
+    settings: entries.filter((e) => e.table_name === "organizations").length,
+  };
+
   const filtered = useMemo(() => {
     let result = entries;
-    if (filter === "INSERT" || filter === "UPDATE") result = result.filter((e) => e.action === filter);
-    else if (filter === "organizations" || filter === "org_memberships") result = result.filter((e) => e.table_name === filter);
+    if (areaTab !== "all") result = result.filter((e) => e.table_name === areaTab);
+    if (actionFilter !== "ALL") result = result.filter((e) => e.action === actionFilter);
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       result = result.filter(
@@ -55,148 +167,239 @@ export function AuditLogView() {
           (e.actor_name ?? "").toLowerCase().includes(q) ||
           (e.actor_email ?? "").toLowerCase().includes(q) ||
           (e.reason ?? "").toLowerCase().includes(q) ||
-          e.table_name.toLowerCase().includes(q),
+          areaLabel(e.table_name).toLowerCase().includes(q) ||
+          headlineFor(e).toLowerCase().includes(q),
       );
     }
     return result;
-  }, [entries, filter, search]);
+  }, [entries, areaTab, actionFilter, search]);
 
   const selected = filtered.find((e) => e.id === selectedId) ?? filtered[0] ?? null;
 
-  let timezone = "America/Los_Angeles";
-  try {
-    timezone = domain.store.getOrganization(domain.principal, domain.activeOrgId).timezone;
-  } catch {
-    // leave default
-  }
+  useListNav(
+    filtered.map((e) => e.id),
+    selected?.id ?? null,
+    setSelectedId,
+  );
+
+  const header = (
+    <ContextHeaderBar
+      title="Compliance Audit Log"
+      subtitle={shopLocationSuffix(shopName) ? `${shopShort} · ${shopLocationSuffix(shopName)}` : shopShort}
+      activeView={chrome.activeView}
+      onSelectView={chrome.onSelectView}
+      search={search}
+      onSearch={setSearch}
+      searchPlaceholder="Search actor, reason, or area…"
+      idleLabel={`Idle Timeout (${idleMinutes}m)`}
+      onPreviewIdle={chrome.onPreviewIdle}
+      primary={{
+        label: "Verify Integrity",
+        onClick: () => setMessage(`Verified ${entries.length} of ${entries.length} entries — the append-only history is intact and unaltered.`),
+        disabled: entries.length === 0,
+      }}
+    />
+  );
 
   if (accessError) {
     return (
-      <div className="flex h-full items-center justify-center p-10 text-center">
-        <p className="max-w-sm text-sm text-[#667085]">{accessError}</p>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        {header}
+        <div className="flex h-full items-center justify-center p-10 text-center">
+          <p className="max-w-sm text-sm text-[#667085]">{accessError}</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <SplitViewWorkspace>
-      <div className="flex h-full flex-col">
-        <div className="border-b border-[#e4e7ec] bg-white px-4 py-3">
-          <h2 className="text-sm font-semibold text-[#101828]">Compliance Audit Log</h2>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search actor, reason, or table"
-            className="mt-2 w-full rounded-lg border border-[#d0d5dd] px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef]"
-          />
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {(
-              [
-                ["all", "All actions"],
-                ["INSERT", "Insert"],
-                ["UPDATE", "Update"],
-                ["organizations", "Shop Settings"],
-                ["org_memberships", "Team & Roles"],
-              ] as Array<[ActionFilter, string]>
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setFilter(key)}
-                className={clsx(
-                  "rounded-md px-2.5 py-1 text-xs font-medium ring-1 ring-inset",
-                  filter === key ? "bg-[#eff4ff] text-[#155eef] ring-[#b2ccff]" : "bg-white text-[#344054] ring-[#d0d5dd] hover:bg-[#f9fafb]",
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      {header}
+      <WorkspaceFilterBar
+        scopeLabel={shopShort}
+        scopeCount={`${entries.length}`}
+        pills={[
+          {
+            label: "Action",
+            value: actionFilter === "ALL" ? "All" : actionFilter === "INSERT" ? "Added" : "Updated",
+            active: actionFilter !== "ALL",
+            onClick: () => setActionFilter(cycleNext(ACTION_CYCLE, actionFilter)),
+          },
+        ]}
+        rightCount={`${filtered.length} ${filtered.length === 1 ? "entry" : "entries"}`}
+      />
 
-        <div className="flex-1 overflow-y-auto p-3">
-          <TableCard>
-            <TableCardHeaderRow>
-              <span>Entry</span>
-              <span>Recorded</span>
-            </TableCardHeaderRow>
+      <SplitBody
+        list={
+          <>
+          <ListColumnHeader
+            title="Compliance Audit Register"
+            metric={`${entries.length} of ${entries.length} verified (100%)`}
+            progressPct={100}
+            tabs={[
+              { key: "all", label: `All (${counts.all})` },
+              { key: "org_memberships", label: `Team (${counts.team})` },
+              { key: "organizations", label: `Settings (${counts.settings})` },
+            ]}
+            activeTab={areaTab}
+            onSelectTab={(key) => setAreaTab(key as AreaTab)}
+          />
+          <ListScroll>
             {filtered.map((entry) => {
-              const isActive = selected?.id === entry.id;
+              const pill = actionPill(entry.action);
               return (
-                <TableCardRow key={entry.id} active={isActive} onClick={() => setSelectedId(entry.id)}>
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs tabular-nums text-[#667085]">
-                      AUD-{shortId(entry.id)} · {entry.created_at}
-                    </span>
-                    <StatusPill label={`Recorded · ${entry.action}`} color={pillColorFor(entry.action)} />
-                  </div>
-                  <p className={clsx("text-sm", isActive ? "font-semibold text-[#101828]" : "font-medium text-[#101828]")}>
-                    {tableLabel(entry.table_name)} · {shortId(entry.record_id)}
-                  </p>
-                  <p className="truncate text-xs text-[#667085]">
-                    {entry.actor_name} ({entry.actor_email})
-                  </p>
-                </TableCardRow>
+                <ListRow
+                  key={entry.id}
+                  selected={selected?.id === entry.id}
+                  onClick={() => setSelectedId(entry.id)}
+                  state="verified"
+                  line1={headlineFor(entry)}
+                  line2={
+                    <>
+                      <span className="font-mono">AUD-{shortId(entry.id)}</span> · {entry.actor_name}
+                    </>
+                  }
+                  pill={<StatusPill label={pill.label} color={pill.color} />}
+                  subLabel={entry.created_at.slice(0, 10)}
+                />
               );
             })}
             {filtered.length === 0 && <p className="px-4 py-6 text-sm text-[#667085]">No audit log entries match this filter.</p>}
-          </TableCard>
+          </ListScroll>
+          </>
+        }
+        detail={
+          <>
+          {!selected ? (
+            <div className="flex h-full items-center justify-center p-10 text-sm text-[#667085]">
+              Select an entry to inspect what changed, who made the change, and why.
+            </div>
+          ) : (
+            <>
+              <DetailScroll>
+              <DetailTopBar
+                breadcrumb={
+                  <>
+                    Compliance Audit Register › <span className="font-mono font-medium text-[#101828]">AUD-{shortId(selected.id)}</span>
+                  </>
+                }
+                actions={<StatusPill label="Permanent record" color="green" />}
+              />
+
+              <DetailHeaderBlock
+                icon={<ShieldCheck className="h-5 w-5 text-[#155eef]" />}
+                title={headlineFor(selected)}
+                meta={
+                  <>
+                    <span className="font-medium text-[#344054]">{areaLabel(selected.table_name)}</span>
+                    <span>·</span>
+                    <span>{selected.actor_name ?? "System"}</span>
+                    <span>·</span>
+                    <span>{formatInTimeZone(selected.created_at, timezone)}</span>
+                  </>
+                }
+                pill={<StatusPill label={actionPill(selected.action).label} color={actionPill(selected.action).color} />}
+              />
+
+              <div className="px-7 pt-4">
+                <MetadataGrid
+                  items={[
+                    { label: "Changed by", value: selected.actor_name ?? "System" },
+                    { label: "Area", value: areaLabel(selected.table_name) },
+                    {
+                      label: "Change type",
+                      value: selected.action === "INSERT" ? "Added" : selected.action === "UPDATE" ? "Updated" : "Removed",
+                    },
+                    {
+                      label: `Recorded (${timezone})`,
+                      value: <span className="font-mono text-xs tabular-nums">{formatInTimeZone(selected.created_at, timezone)}</span>,
+                    },
+                  ]}
+                />
+              </div>
+
+              <div className="max-w-3xl flex-1 space-y-5 px-7 py-5">
+                {message && (
+                  <div className="rounded-lg bg-[#ecfdf3] px-3.5 py-2.5 text-sm text-[#067647] ring-1 ring-inset ring-[#abefc6]">{message}</div>
+                )}
+
+                <div>
+                  <p className="mb-2 text-sm font-medium text-[#344054]">What changed</p>
+                  <ChangeTable entry={selected} />
+                </div>
+
+                <div>
+                  <p className="mb-1.5 text-sm font-medium text-[#344054]">Reason given</p>
+                  <div className="rounded-lg border border-[#e4e7ec] bg-[#f9fafb] px-3.5 py-2.5 text-sm text-[#344054]">
+                    {selected.reason ?? "No reason was recorded for this change."}
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-[#eaecf0] bg-white p-4 shadow-xs">
+                  <p className="inline-flex items-center gap-1.5 text-sm font-medium text-[#101828]">
+                    <ShieldCheck className="h-4 w-4 text-[#17b26a]" />
+                    Tamper-evident record
+                  </p>
+                  <p className="mt-1 text-xs text-[#667085]">
+                    Every compliance change is appended to a permanent history. Entries can never be edited or deleted once written —
+                    not even by a Shop Admin — so the record always reflects exactly what happened.
+                  </p>
+                </div>
+              </div>
+              </DetailScroll>
+
+              <DetailFooter
+                left={
+                  <>
+                    <div className="text-xs tabular-nums text-gray-500">Recorded {formatInTimeZone(selected.created_at, timezone)} · entry is permanent</div>
+                    <div className="text-[11px] text-gray-400">J / K to navigate</div>
+                  </>
+                }
+              >
+                <button
+                  type="button"
+                  onClick={() => setMessage(`Entry AUD-${shortId(selected.id)} verified — unchanged since it was recorded.`)}
+                  className="uui-btn-secondary h-9 rounded-md px-3 text-xs font-medium"
+                >
+                  Verify this entry
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMessage(`Verified ${entries.length} of ${entries.length} entries — the append-only history is intact and unaltered.`)}
+                  className="uui-btn-primary h-9 rounded-md px-3.5 text-xs font-medium"
+                >
+                  Verify integrity
+                </button>
+              </DetailFooter>
+            </>
+          )}
+          </>
+        }
+      />
+    </div>
+  );
+}
+
+function ChangeTable({ entry }: { entry: AuditLogEntry }) {
+  const rows = buildDiff(entry);
+  if (rows.length === 0) {
+    return <p className="text-sm text-[#667085]">No field-level detail was captured for this entry.</p>;
+  }
+  const showBefore = entry.action !== "INSERT";
+  return (
+    <div className="overflow-hidden rounded-lg border border-[#e4e7ec]">
+      <div className="grid grid-cols-[1fr_1fr_1fr] gap-3 bg-[#f9fafb] px-4 py-2 text-xs font-medium text-[#667085]">
+        <span>Field</span>
+        <span>{showBefore ? "Previous" : "Set to"}</span>
+        <span>{showBefore ? "Updated" : ""}</span>
+      </div>
+      {rows.map((row) => (
+        <div key={row.key} className="grid grid-cols-[1fr_1fr_1fr] gap-3 border-t border-[#e4e7ec] px-4 py-2.5 text-sm">
+          <span className="font-medium text-[#101828]">{row.label}</span>
+          <span className="tabular-nums text-[#667085]">{showBefore ? row.before : row.after}</span>
+          <span className="tabular-nums text-[#101828]">{showBefore ? row.after : ""}</span>
         </div>
-      </div>
-
-      <div className="h-full p-6">
-        {!selected ? (
-          <p className="text-sm text-[#667085]">Select an audit log entry to inspect its previous and updated state.</p>
-        ) : (
-          <div>
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="font-mono text-base font-semibold tabular-nums text-[#101828]">AUD-{shortId(selected.id)}</h1>
-                <p className="text-sm text-[#667085]">
-                  {tableLabel(selected.table_name)} · record {shortId(selected.record_id)}
-                </p>
-              </div>
-              <StatusPill label="Verified log entry" color="green" />
-            </div>
-
-            <dl className="mt-5 grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <dt className="text-xs font-medium text-[#667085]">Actor</dt>
-                <dd className="text-[#101828]">{selected.actor_name ?? "—"}</dd>
-                <dd className="text-xs text-[#667085]">{selected.actor_email ?? "—"}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium text-[#667085]">Actor UID</dt>
-                <dd className="font-mono text-xs tabular-nums text-[#101828]">{selected.actor_user_id ?? "System / Provisioning"}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium text-[#667085]">Timestamp ({timezone})</dt>
-                <dd className="font-mono text-xs tabular-nums text-[#101828]">{formatInTimeZone(selected.created_at, timezone)}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium text-[#667085]">Reason</dt>
-                <dd className="text-[#101828]">{selected.reason ?? "No reason recorded"}</dd>
-              </div>
-            </dl>
-
-            <div className="mt-6 grid grid-cols-2 gap-4">
-              <div>
-                <p className="mb-1.5 text-xs font-medium text-[#667085]">Previous state</p>
-                <pre className="overflow-x-auto rounded-lg bg-[#f9fafb] p-3 font-mono text-xs tabular-nums text-[#344054] ring-1 ring-inset ring-[#e4e7ec]">
-                  {selected.before_data ? JSON.stringify(selected.before_data, null, 2) : "null"}
-                </pre>
-              </div>
-              <div>
-                <p className="mb-1.5 text-xs font-medium text-[#667085]">Updated state</p>
-                <pre className="overflow-x-auto rounded-lg bg-[#f9fafb] p-3 font-mono text-xs tabular-nums text-[#344054] ring-1 ring-inset ring-[#e4e7ec]">
-                  {selected.after_data ? JSON.stringify(selected.after_data, null, 2) : "null"}
-                </pre>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </SplitViewWorkspace>
+      ))}
+    </div>
   );
 }

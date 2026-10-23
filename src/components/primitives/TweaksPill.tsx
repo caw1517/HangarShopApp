@@ -2,8 +2,15 @@
 
 import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { SlidersHorizontal } from "@/components/primitives/icons";
 import { useDomain } from "@/lib/domain/context";
 import { PERSONA_ORDER, PERSONAS, type PersonaKey } from "@/lib/domain/personas";
+import { ORG_APEX_ID, ORG_CASCADE_ID, ORG_SLUG_BY_ID } from "@/lib/domain/seed";
+
+const SHOPS = [
+  { id: ORG_APEX_ID, label: "Apex Charter MX — Hangar 1" },
+  { id: ORG_CASCADE_ID, label: "Cascade Flight Services" },
+];
 
 export function TweaksPill() {
   const [expanded, setExpanded] = useState(false);
@@ -12,11 +19,20 @@ export function TweaksPill() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const pushParam = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set(key, value);
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
+  const handleShopChange = (orgId: string) => {
+    domain.setActiveOrgId(orgId);
+    pushParam("shop", ORG_SLUG_BY_ID[orgId] ?? orgId);
+  };
+
   const handlePersonaChange = (key: PersonaKey) => {
     domain.setPersonaKey(key);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("persona", key);
-    router.push(`${pathname}?${params.toString()}`);
+    pushParam("persona", key);
   };
 
   if (!expanded) {
@@ -24,44 +40,65 @@ export function TweaksPill() {
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="fixed bottom-3 right-3 z-40 bg-gray-900/80 text-white text-[11px] font-medium px-2.5 py-1 rounded-full shadow-sm hover:bg-gray-900"
+        className="fixed bottom-3 right-3 z-50 inline-flex items-center gap-1.5 rounded-full bg-gray-900/80 px-2.5 py-1 text-[11px] font-medium text-white shadow-sm hover:bg-gray-900"
       >
+        <SlidersHorizontal className="h-3 w-3" />
         Tweaks
       </button>
     );
   }
 
   return (
-    <div className="fixed bottom-3 right-3 z-40 w-64 rounded-xl bg-white p-3 shadow-lg ring-1 ring-inset ring-[#e4e7ec]">
+    <div className="fixed bottom-3 right-3 z-50 w-72 rounded-xl bg-[#0c111d] p-3 text-white shadow-xl ring-1 ring-inset ring-white/10">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold text-[#101828]">Tweaks</p>
-        <button type="button" onClick={() => setExpanded(false)} className="text-xs text-[#667085] hover:text-[#344054]">
+        <p className="inline-flex items-center gap-1.5 text-xs font-semibold">
+          <SlidersHorizontal className="h-3.5 w-3.5 text-white/70" />
+          Tweaks
+        </p>
+        <button type="button" onClick={() => setExpanded(false)} className="text-[11px] text-white/60 hover:text-white">
           Close
         </button>
       </div>
 
-      <div className="mt-3">
-        <label className="mb-1 block text-[11px] font-medium text-[#667085]">Persona / role switcher</label>
-        <select
-          value={domain.personaKey}
-          onChange={(e) => handlePersonaChange(e.target.value as PersonaKey)}
-          className="w-full appearance-none rounded-md border border-[#d0d5dd] bg-white px-2.5 py-1.5 text-sm font-medium text-[#101828] focus:outline-none focus:ring-2 focus:ring-[#155eef]"
-        >
-          {PERSONA_ORDER.map((key) => (
-            <option key={key} value={key}>
-              {PERSONAS[key].label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <div className="mt-3 space-y-3">
+        <div>
+          <label className="mb-1 block text-[11px] font-medium text-white/55">Shop</label>
+          <select
+            value={domain.activeOrgId}
+            onChange={(e) => handleShopChange(e.target.value)}
+            className="w-full appearance-none rounded-md border border-white/10 bg-[#161b26] px-2.5 py-1.5 text-xs font-medium text-white focus:outline-none focus:ring-2 focus:ring-[#155eef]"
+          >
+            {SHOPS.map((shop) => (
+              <option key={shop.id} value={shop.id}>
+                {shop.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      <button
-        type="button"
-        onClick={domain.idlePreviewWarning}
-        className="uui-btn-secondary mt-3 w-full rounded-lg px-3 py-2 text-sm font-medium"
-      >
-        Preview idle warning
-      </button>
+        <div>
+          <label className="mb-1 block text-[11px] font-medium text-white/55">Persona / role</label>
+          <select
+            value={domain.personaKey}
+            onChange={(e) => handlePersonaChange(e.target.value as PersonaKey)}
+            className="w-full appearance-none rounded-md border border-white/10 bg-[#161b26] px-2.5 py-1.5 text-xs font-medium text-white focus:outline-none focus:ring-2 focus:ring-[#155eef]"
+          >
+            {PERSONA_ORDER.map((key) => (
+              <option key={key} value={key}>
+                {PERSONAS[key].label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          type="button"
+          onClick={domain.idlePreviewWarning}
+          className="w-full rounded-md border border-white/10 bg-[#161b26] px-3 py-1.5 text-xs font-medium text-white/90 transition hover:bg-[#1f242f]"
+        >
+          Preview idle warning
+        </button>
+      </div>
     </div>
   );
 }
