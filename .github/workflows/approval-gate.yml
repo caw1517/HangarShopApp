@@ -1,0 +1,77 @@
+name: Approval gate
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled, unlabeled]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  approval-gate:
+    name: approval-gate
+    runs-on: ubuntu-latest
+    steps:
+      # Canaan and all bots share one GitHub account, so GitHub's native
+      # "require N approvals" cannot distinguish reviewers. We gate on two
+      # labels instead: Hangar Tester reviews first (tester-approved), then
+      # Canaan reviews last and merges (canaan-approved).
+      - name: Check dual-approval labels
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const TESTER = 'tester-approved';
+            const CANAAN = 'canaan-approved';
+            const prNumber = context.payload.pull_request.number;
+
+            // New commits invalidate prior approvals: strip both labels and fail
+            // so both reviewers must re-approve the new head commit.
+            if (context.payload.action === 'synchronize') {
+              for (const label of [TESTER, CANAAN]) {
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: prNumber,
+                    name: label,
+                  });
+                } catch (err) {
+                  // 404 => label wasn't present; nothing to remove.
+                  if (err.status !== 404) throw err;
+                }
+              }
+              core.setFailed(
+                'New commits were pushed, which resets approvals. Both ' +
+                `"${TESTER}" and "${CANAAN}" have been removed. Hangar Tester ` +
+                'and Canaan must each re-review and re-approve the new head commit.'
+              );
+              return;
+            }
+
+            // Read the PR's CURRENT labels from the API rather than trusting the
+            // (possibly stale) event payload.
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            const present = new Set(labels.map((l) => l.name));
+
+            const missing = [];
+            if (!present.has(TESTER)) {
+              missing.push(`Missing ${TESTER}: Hangar Tester must review and approve first.`);
+            }
+            if (!present.has(CANAAN)) {
+              missing.push(`Missing ${CANAAN}: Canaan approves last.`);
+            }
+
+            if (missing.length > 0) {
+              core.setFailed(missing.join('\n'));
+              return;
+            }
+
+            core.info(`Both "${TESTER}" and "${CANAAN}" are present. Approval gate passed.`);

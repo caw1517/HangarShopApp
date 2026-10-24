@@ -13,3 +13,7 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table.
 
 Edit the "Label in our tracker" column to match whatever vocabulary you actually use.
+
+## Approval labels
+
+Two additional labels drive the PR dual-approval gate (see `AGENTS.md` rule 1): `tester-approved` (Hangar Tester has reviewed and approved first) and `canaan-approved` (Canaan has approved last and may merge). The `approval-gate` workflow requires both before a PR can merge, and strips both when new commits are pushed.

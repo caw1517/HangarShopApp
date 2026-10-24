@@ -2,9 +2,9 @@
 
 Every agent working on this repo follows these rules: Claude Code, Codex, reviewers, and the team lead.
 
-1. Nothing merges to `main` without Canaan's approval. Agents work only on branches and open PRs; Canaan merges.
+1. Nothing merges to `main` until both approvals are in, in order: first Hangar Tester (a written review comment plus the `tester-approved` label), then Canaan (the `canaan-approved` label, always the last reviewer), and the `approval-gate` status check must pass. Pushing new commits removes both labels, so approvals always apply to the current commit. Agents work only on branches and open PRs; Canaan merges.
 2. PRs are small: one ticket per PR, linked to its issue, saying what changed and how it was tested.
-3. A second agent reviews every PR, and tests must pass, before Canaan is asked to look.
+3. Hangar Tester reviews every PR — code review, UI verification, app testing, and PR review — and tests must pass before Canaan is asked to look.
 4. Canaan approves each wayfinder stage (map, key decisions, spec, ticket list) before build starts.
 5. Design prototypes need Canaan's approval before they become tickets.
 6. Always ask Canaan first about new dependencies or paid services, data-model changes, anything touching security/auth, and deleting anything.
