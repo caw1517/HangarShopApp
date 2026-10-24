@@ -2,11 +2,18 @@ name: Approval gate
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize, labeled, unlabeled]
+    types: [opened, reopened, synchronize, labeled, unlabeled, edited]
     branches: [main]
 
+# Runs for one PR execute one at a time, in order. queue: max (GitHub, May 2026)
+# keeps every pending run instead of replacing the pending one, so a strip-labels
+# run on a new push can't be dropped by a later label event.
+concurrency:
+  group: approval-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+  queue: max
+
 permissions:
-  contents: read
   pull-requests: write
   issues: write
 
@@ -17,20 +24,25 @@ jobs:
     steps:
       # Canaan and all bots share one GitHub account, so GitHub's native
       # "require N approvals" cannot distinguish reviewers. We gate on two
-      # labels instead: Hangar Tester reviews first (tester-approved), then
-      # Canaan reviews last and merges (canaan-approved).
+      # labels instead: by process Hangar Tester reviews first (tester-approved)
+      # and Canaan reviews last and merges (canaan-approved). The check only
+      # verifies both labels are present; it does not enforce the order.
       - name: Check dual-approval labels
-        uses: actions/github-script@v7
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const TESTER = 'tester-approved';
             const CANAAN = 'canaan-approved';
             const prNumber = context.payload.pull_request.number;
+            const action = context.payload.action;
 
-            // New commits invalidate prior approvals: strip both labels and fail
-            // so both reviewers must re-approve the new head commit.
-            if (context.payload.action === 'synchronize') {
+            // New commits (synchronize) or a reopen invalidate prior approvals:
+            // strip both labels and fail so both reviewers re-approve the current
+            // head commit. A reopened PR may have had commits pushed while it was
+            // closed, so approvals reset the same way.
+            if (action === 'synchronize' || action === 'reopened') {
+              let stripFailed = false;
               for (const label of [TESTER, CANAAN]) {
                 try {
                   await github.rest.issues.removeLabel({
@@ -41,32 +53,55 @@ jobs:
                   });
                 } catch (err) {
                   // 404 => label wasn't present; nothing to remove.
-                  if (err.status !== 404) throw err;
+                  if (err.status === 404) continue;
+                  // On fork PRs GITHUB_TOKEN is read-only, so the strip can fail.
+                  // Don't swallow the failure: warn that labels could not be
+                  // removed (likely a fork PR) and that reviewers must re-check
+                  // by hand, then still fail the job below.
+                  stripFailed = true;
+                  core.warning(
+                    `Could not remove "${label}" (likely a fork PR where ` +
+                    'GITHUB_TOKEN is read-only). Reviewers must re-check this PR ' +
+                    'by hand after any new commits.'
+                  );
                 }
               }
               core.setFailed(
-                'New commits were pushed, which resets approvals. Both ' +
-                `"${TESTER}" and "${CANAAN}" have been removed. Hangar Tester ` +
-                'and Canaan must each re-review and re-approve the new head commit.'
+                (action === 'reopened'
+                  ? 'The PR was reopened; commits may have been pushed while it ' +
+                    'was closed, which resets approvals. '
+                  : 'New commits were pushed, which resets approvals. ') +
+                `Both "${TESTER}" and "${CANAAN}" should be removed. Hangar ` +
+                'Tester and Canaan must each re-review and re-approve the ' +
+                'current head commit.' +
+                (stripFailed
+                  ? ' Labels could not be removed automatically (likely a fork ' +
+                    'PR): Hangar Tester removes tester-approved and Canaan ' +
+                    'removes canaan-approved by hand.'
+                  : '')
               );
               return;
             }
 
-            // Read the PR's CURRENT labels from the API rather than trusting the
-            // (possibly stale) event payload.
+            // Any other event (opened, labeled, unlabeled, edited) just re-checks
+            // the PR's CURRENT labels. "edited" also fires when the base branch is
+            // retargeted to main; we never strip labels on it.
+            // Read labels from the API rather than trusting the (possibly stale)
+            // event payload.
             const { data: labels } = await github.rest.issues.listLabelsOnIssue({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
+              per_page: 100,
             });
             const present = new Set(labels.map((l) => l.name));
 
             const missing = [];
             if (!present.has(TESTER)) {
-              missing.push(`Missing ${TESTER}: Hangar Tester must review and approve first.`);
+              missing.push(`Missing ${TESTER}: Hangar Tester adds this after its written review.`);
             }
             if (!present.has(CANAAN)) {
-              missing.push(`Missing ${CANAAN}: Canaan approves last.`);
+              missing.push(`Missing ${CANAAN}: Canaan adds this label, as the final reviewer (by process, Canaan approves last).`);
             }
 
             if (missing.length > 0) {
