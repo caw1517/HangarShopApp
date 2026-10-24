@@ -99,7 +99,7 @@ function AppRootInner() {
   };
 
   if (domain.signedOut) {
-    return <SignedOutScreen onSignIn={domain.signInAgain} />;
+    return <SignedOutScreen reason={domain.signOutReason} onSignIn={domain.signInAgain} />;
   }
 
   return (
@@ -127,16 +127,27 @@ function AppRootInner() {
   );
 }
 
-function SignedOutScreen({ onSignIn }: { onSignIn: () => void }) {
+function SignedOutScreen({
+  reason,
+  onSignIn,
+}: {
+  reason: "idle" | "manual" | null;
+  onSignIn: () => void;
+}) {
+  const manual = reason === "manual";
   return (
     <div className="flex h-screen flex-col items-center justify-center bg-[#0c111d] px-4 text-center">
       <div className="w-full max-w-sm rounded-xl bg-white p-8 shadow-xl">
         <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-[#155eef] text-sm font-semibold text-white">
           HS
         </div>
-        <h1 className="text-lg font-semibold text-[#101828]">You&apos;ve been signed out</h1>
+        <h1 className="text-lg font-semibold text-[#101828]">
+          {manual ? "You've signed out" : "You've been signed out"}
+        </h1>
         <p className="mt-2 text-sm text-[#475467]">
-          Your session ended after the configured idle timeout. Sign in again to return to your Shop.
+          {manual
+            ? "You've signed out. Sign in again to return to your Shop."
+            : "Your session ended after the configured idle timeout. Sign in again to return to your Shop."}
         </p>
         <button
           type="button"

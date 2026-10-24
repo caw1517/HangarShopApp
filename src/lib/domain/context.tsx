@@ -24,7 +24,8 @@ interface DomainContextValue {
   idlePreviewTimeout: () => void;
   idleReset: () => void;
   signedOut: boolean;
-  signOut: () => void;
+  signOutReason: "idle" | "manual" | null;
+  signOut: (reason?: "idle" | "manual") => void;
   signInAgain: () => void;
 }
 
@@ -36,6 +37,7 @@ export function DomainProvider({ children }: { children: React.ReactNode }) {
   const [version, setVersion] = useState(0);
   const [idleState, setIdleState] = useState<IdleSessionState>("active");
   const [signedOut, setSignedOut] = useState(false);
+  const [signOutReason, setSignOutReason] = useState<"idle" | "manual" | null>(null);
 
   const principal = PERSONAS[personaKey].principal;
 
@@ -56,24 +58,28 @@ export function DomainProvider({ children }: { children: React.ReactNode }) {
 
   // Actually end the session: sign out of Supabase when a client is configured
   // (no-op in demo mode where env vars are absent), clear the local idle clock,
-  // and drop to the signed-out screen.
-  const signOut = useCallback(() => {
+  // and drop to the signed-out screen. `reason` distinguishes a user-initiated
+  // sign-out ("manual") from the idle-timeout path ("idle") so the signed-out
+  // screen can show honest copy for each.
+  const signOut = useCallback((reason: "idle" | "manual" = "manual") => {
     const client = getSupabaseClient();
     if (client) void client.auth.signOut().catch(() => {});
     idleTrackerRef.current.reset();
     setIdleState("active");
+    setSignOutReason(reason);
     setSignedOut(true);
   }, []);
 
   const signInAgain = useCallback(() => {
     idleTrackerRef.current.reset();
     setIdleState("active");
+    setSignOutReason(null);
     setSignedOut(false);
   }, []);
 
   // Reaching the idle timeout itself signs the user out, not just shows a dialog.
   useEffect(() => {
-    if (idleState === "timed-out" && !signedOut) signOut();
+    if (idleState === "timed-out" && !signedOut) signOut("idle");
   }, [idleState, signedOut, signOut]);
 
   useEffect(() => {
@@ -127,11 +133,12 @@ export function DomainProvider({ children }: { children: React.ReactNode }) {
         setIdleState(idleTrackerRef.current.state);
       },
       signedOut,
+      signOutReason,
       signOut,
       signInAgain,
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }),
-    [principal, personaKey, activeOrgId, version, idleState, idleMinutes, signedOut, signOut, signInAgain],
+    [principal, personaKey, activeOrgId, version, idleState, idleMinutes, signedOut, signOutReason, signOut, signInAgain],
   );
 
   return <DomainContext.Provider value={value}>{children}</DomainContext.Provider>;

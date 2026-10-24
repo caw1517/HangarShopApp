@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { PGlite } from "@electric-sql/pglite";
+import { PGlite, type PGliteInterface } from "@electric-sql/pglite";
 
 /**
  * Real-Postgres test harness for the Slice 1 migration, backed by PGlite
@@ -76,6 +76,17 @@ export async function createTestDb(): Promise<PGlite> {
   return db;
 }
 
+/**
+ * Clone a fully-migrated base DB into an independent copy for a single test.
+ * Cloning the data directory is far cheaper than re-applying the migration SQL,
+ * so tests build the base once in beforeAll and take a fresh clone per test --
+ * each test still gets a pristine, isolated Postgres without the per-test cost
+ * (and flake risk) of re-running the migration.
+ */
+export function cloneTestDb(base: PGliteInterface): Promise<PGliteInterface> {
+  return base.clone();
+}
+
 export interface ActingClaims {
   sub?: string | null;
   role?: "anon" | "authenticated" | "service_role";
@@ -89,7 +100,7 @@ export interface ActingClaims {
  * (is_local = false) so it survives PGlite's per-statement autocommit, then
  * fully reset afterwards.
  */
-export async function acting<T>(db: PGlite, claims: ActingClaims, fn: () => Promise<T>): Promise<T> {
+export async function acting<T>(db: PGliteInterface, claims: ActingClaims, fn: () => Promise<T>): Promise<T> {
   const role = claims.role ?? "authenticated";
   const jwt =
     claims.sub === undefined && claims.email === undefined && claims.role === undefined
@@ -129,7 +140,7 @@ export const A_MECH_MEMBER = "a0000003-0000-4000-8000-0000000000a3";
 export const B_ADMIN_USER = "b0000001-0000-4000-8000-000000000001";
 export const B_ADMIN_MEMBER = "b0000001-0000-4000-8000-0000000000b1";
 
-export async function seedTwoShops(db: PGlite): Promise<void> {
+export async function seedTwoShops(db: PGliteInterface): Promise<void> {
   await db.exec(`
     INSERT INTO organizations (id, slug, name, tool_id_prefix, timezone)
     VALUES

@@ -135,7 +135,7 @@ export function AppShellNav({ activeView, activeSection, onSelectView, onSelectS
               {brandInitials}
             </span>
             <span className="min-w-0 text-left">
-              <span className="block truncate text-sm font-semibold leading-tight tracking-tight text-white">{shopTitle}</span>
+              <span className="line-clamp-2 text-sm font-semibold leading-tight tracking-tight text-white">{shopTitle}</span>
               {subtitleParts.length > 0 && (
                 <span className="block truncate text-[11px] text-white/65">{subtitleParts.join(" · ")}</span>
               )}
@@ -221,7 +221,7 @@ export function AppShellNav({ activeView, activeSection, onSelectView, onSelectS
           </div>
           <div className="min-w-0">
             <p className="truncate text-xs font-medium text-white">{domain.principal.fullName}</p>
-            <p className="truncate text-[11px] text-white/65">{hasAccess || domain.principal.isPlatformOwner ? footerSubtitle : "No Shop access"}</p>
+            <p className="line-clamp-2 text-[11px] leading-tight text-white/65">{hasAccess || domain.principal.isPlatformOwner ? footerSubtitle : "No Shop access"}</p>
           </div>
         </div>
       </div>

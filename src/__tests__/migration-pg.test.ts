@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { PGlite } from "@electric-sql/pglite";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import type { PGliteInterface } from "@electric-sql/pglite";
 import {
   acting,
   A_ADMIN_MEMBER,
@@ -10,6 +10,7 @@ import {
   A_MECH_USER,
   B_ADMIN_MEMBER,
   B_ADMIN_USER,
+  cloneTestDb,
   createTestDb,
   member,
   ORG_A,
@@ -36,7 +37,12 @@ const adminB = member(B_ADMIN_USER, "admin.b@cascadeflightservices.example", "Ad
 
 const SERVICE = { role: "service_role" as const };
 
-let db: PGlite;
+// A single fully-migrated base DB is built once for the file; each test takes a
+// fresh, isolated clone of it. Cloning the data dir is much cheaper than
+// re-applying the migration per test, which keeps the real-Postgres suite fast
+// and well clear of hook timeouts when files run in parallel under load.
+let base: PGliteInterface;
+let db: PGliteInterface;
 
 async function rows(sql: string, params: unknown[] = []): Promise<Record<string, unknown>[]> {
   const res = await db.query<Record<string, unknown>>(sql, params);
@@ -49,8 +55,16 @@ async function one(sql: string, params: unknown[] = []): Promise<Record<string, 
   return r[0]!;
 }
 
+beforeAll(async () => {
+  base = await createTestDb();
+});
+
+afterAll(async () => {
+  await base.close();
+});
+
 beforeEach(async () => {
-  db = await createTestDb();
+  db = await cloneTestDb(base);
 });
 
 afterEach(async () => {
