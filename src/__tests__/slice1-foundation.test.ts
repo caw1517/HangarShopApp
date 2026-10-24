@@ -286,4 +286,34 @@ describe("Idle session timeout state machine", () => {
     tracker.forceTimeout();
     expect(tracker.state).toBe("timed-out");
   });
+
+  it("restarts the clock on background activity only while active", () => {
+    const tracker = new IdleSessionTracker(30);
+    tracker.advance(20 * 60_000);
+    expect(tracker.state).toBe("active");
+    // Background activity while active restarts the idle clock.
+    expect(tracker.registerActivity()).toBe("active");
+    expect(tracker.elapsedMilliseconds).toBe(0);
+  });
+
+  it("ignores background activity once the warning dialog is showing, so Sign out now stays reachable", () => {
+    // Reproduces PR #38: the mousedown preceding a "Sign out now" click must not
+    // silently dismiss the warning (which would unmount the dialog before the
+    // click lands). Whether the warning was reached by the real timeout or by the
+    // Tweaks "Preview warning" control, ambient activity leaves it in place.
+    const real = new IdleSessionTracker(30);
+    real.advance(29 * 60_000);
+    expect(real.state).toBe("warning");
+    expect(real.registerActivity()).toBe("warning");
+    expect(real.state).toBe("warning");
+
+    const previewed = new IdleSessionTracker(30);
+    previewed.forceWarning();
+    expect(previewed.registerActivity()).toBe("warning");
+    expect(previewed.state).toBe("warning");
+
+    // The explicit "Stay signed in" choice still clears the warning.
+    previewed.reset();
+    expect(previewed.state).toBe("active");
+  });
 });

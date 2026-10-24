@@ -34,7 +34,7 @@ const SECTIONS: Array<{
   category: "Configuration" | "Security";
   icon: typeof SettingsIcon;
 }> = [
-  { key: "thresholds", label: "Compliance Thresholds", blurb: "Due-soon, missing-tool & stale-aircraft windows", category: "Configuration", icon: SettingsIcon },
+  { key: "thresholds", label: "Compliance Thresholds", blurb: "Due-soon, missing-tool & stale windows", category: "Configuration", icon: SettingsIcon },
   { key: "digest", label: "Weekly Digest & Idle Timeout", blurb: "Scheduled summary and idle sign-out", category: "Configuration", icon: SettingsIcon },
   { key: "provisioning", label: "New Shop Provisioning", blurb: "Create a new Shop and invite its first Admin", category: "Security", icon: Building },
   { key: "rls", label: "Shop Isolation & Data Security", blurb: "Who can view and change each area", category: "Security", icon: Lock },
@@ -235,7 +235,7 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
                 <span>·</span>
                 <span>{selected.category}</span>
                 <span>·</span>
-                <span className="font-mono">{timezone}</span>
+                <span>{timezone}</span>
               </>
             }
           />

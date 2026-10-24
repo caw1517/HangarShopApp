@@ -48,6 +48,19 @@ export class IdleSessionTracker {
     this._state = "active";
   }
 
+  /**
+   * Background user activity (mousemove/keydown/etc.). Restarts the clock only
+   * while the session is still "active". Once the warning dialog is showing, the
+   * user must make an explicit choice ("Stay signed in" / "Sign out now"), so
+   * ambient activity is ignored — otherwise the mousedown that precedes a
+   * "Sign out now" click would reset the tracker and unmount the dialog before
+   * the click itself lands, leaving the user stuck signed in.
+   */
+  registerActivity(): IdleSessionState {
+    if (this._state === "active") this.reset();
+    return this._state;
+  }
+
   /** Force the warning state for UI preview/demo purposes without waiting out the real timeout. */
   forceWarning(): void {
     this.elapsedMs = Math.max(this.idleTimeoutMs - this.warningLeadMs, 0);

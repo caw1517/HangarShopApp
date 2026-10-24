@@ -79,9 +79,7 @@ export function DomainProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const ACTIVITY_EVENTS = ["mousemove", "keydown", "mousedown", "touchstart"] as const;
     const handleActivity = () => {
-      if (idleTrackerRef.current.state === "timed-out") return;
-      idleTrackerRef.current.reset();
-      setIdleState("active");
+      setIdleState(idleTrackerRef.current.registerActivity());
     };
     ACTIVITY_EVENTS.forEach((event) => window.addEventListener(event, handleActivity));
 

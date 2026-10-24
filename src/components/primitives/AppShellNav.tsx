@@ -72,11 +72,13 @@ export function AppShellNav({ activeView, activeSection, onSelectView, onSelectS
   };
 
   // Shop header derivation (two-line title + brand mark), with a graceful
-  // fallback for a signed-in user with no read access to the active Shop.
-  let shopTitle = SHOPS.find((s) => s.id === domain.activeOrgId)?.fallback ?? "Unknown Shop";
-  let shopLocation: string | null = null;
-  let toolPrefix = "";
-  let timezone = "";
+  // fallback for a signed-in user with no read access to the active Shop (e.g.
+  // the Platform Owner). The fallback is split the same way as a readable Shop
+  // so the brand line stays short ("Apex Charter MX") instead of showing the
+  // full "— Hangar 1" suffix and truncating.
+  const fallbackName = SHOPS.find((s) => s.id === domain.activeOrgId)?.fallback ?? "Unknown Shop";
+  let shopTitle = shortShopName(fallbackName);
+  let shopLocation: string | null = shopLocationSuffix(fallbackName);
   let hasAccess = false;
   let footerSubtitle = domain.principal.isPlatformOwner ? "Platform Owner" : "No Shop access";
   let memberCount: number | null = null;
@@ -84,8 +86,6 @@ export function AppShellNav({ activeView, activeSection, onSelectView, onSelectS
 
   try {
     const org = domain.store.getOrganization(domain.principal, domain.activeOrgId);
-    toolPrefix = org.tool_id_prefix;
-    timezone = org.timezone;
     shopTitle = shortShopName(org.name);
     shopLocation = shopLocationSuffix(org.name);
     hasAccess = true;
@@ -110,7 +110,10 @@ export function AppShellNav({ activeView, activeSection, onSelectView, onSelectS
   }
 
   const brandInitials = initials(shopTitle);
-  const subtitleParts = [shopLocation, toolPrefix, timezone].filter(Boolean);
+  // Rail subtitle is the location only (e.g. "Hangar 1"); the tool-ID prefix and
+  // timezone live in the Settings detail header, not the rail, so the line stays
+  // short and never truncates at narrow widths.
+  const subtitleParts = [shopLocation].filter(Boolean);
 
   const ADMIN_COUNT: Record<WorkspaceView, number | null> = {
     team: memberCount,
