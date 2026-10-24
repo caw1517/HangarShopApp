@@ -13,3 +13,13 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table.
 
 Edit the "Label in our tracker" column to match whatever vocabulary you actually use.
+
+## Approval labels
+
+Two additional labels drive the PR dual-approval gate (see `AGENTS.md` rule 1): `tester-approved` and `canaan-approved`. The `approval-gate` workflow requires both labels to be present before a PR can merge; it does not enforce the order they were added (by process Hangar Tester reviews first and Canaan reviews last).
+
+- Only Hangar Tester adds `tester-approved`, after its written review.
+- Only Canaan adds `canaan-approved`. Agents never add, remove, or re-add it, even though all agents share the `caw1517` account.
+- The workflow strips both labels when new commits are pushed and when the PR is reopened, so approvals always apply to the current commit.
+- Fork PRs: `GITHUB_TOKEN` is read-only on forks, so the workflow can't strip the labels. Reviewers must re-check fork PRs by hand after any new commits.
+- No agent ever uses `gh pr merge --admin` or otherwise bypasses or overrides the `approval-gate` check.
