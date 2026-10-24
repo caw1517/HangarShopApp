@@ -223,9 +223,11 @@ export interface ListRowProps {
   line2: React.ReactNode;
   pill: React.ReactNode;
   subLabel?: string;
+  /** Overrides the leading square's hover tooltip (e.g. a neutral "Recorded"). */
+  squareTitle?: string;
 }
 
-export function ListRow({ selected, onClick, state, line1, line2, pill, subLabel }: ListRowProps) {
+export function ListRow({ selected, onClick, state, line1, line2, pill, subLabel, squareTitle }: ListRowProps) {
   return (
     <button
       type="button"
@@ -236,7 +238,7 @@ export function ListRow({ selected, onClick, state, line1, line2, pill, subLabel
       )}
     >
       <div className="mt-0.5">
-        <VerificationSquare state={state} />
+        <VerificationSquare state={state} title={squareTitle} />
       </div>
       <div className="min-w-0 flex-1">
         <div className={clsx("truncate text-[13.5px] text-[#101828]", selected ? "font-semibold" : "font-medium")}>{line1}</div>

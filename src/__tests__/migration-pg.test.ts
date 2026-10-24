@@ -274,29 +274,40 @@ describe("Shop provisioning authorization (ADR-0001)", () => {
     await expect(acting(db, SERVICE, () => db.query(bad))).rejects.toThrow(/tool_id_prefix|constraint/i);
   });
 
-  it("authorizes the platform-owner check only for a registered owner (defense-in-depth path)", async () => {
+  it("denies anon and authenticated direct EXECUTE on is_platform_owner (0002 lockdown)", async () => {
+    // is_platform_owner is only reachable inside provision_shop (SECURITY
+    // DEFINER). No invoking role may call it directly to probe ownership.
+    await expect(acting(db, { role: "anon" }, () => db.query(`SELECT is_platform_owner()`))).rejects.toThrow(
+      /permission denied for function is_platform_owner/i,
+    );
+    await expect(
+      acting(db, member("d0000009-0000-4000-8000-000000000009", "probe@x.example", "Probe"), () =>
+        db.query(`SELECT is_platform_owner()`),
+      ),
+    ).rejects.toThrow(/permission denied for function is_platform_owner/i);
+  });
+
+  it("still authorizes a registered owner through the is_platform_owner logic (defense-in-depth path)", async () => {
+    // The invoking roles can't call it, so exercise the SQL logic as the DB
+    // owner (which can execute) with the signed sub claim set, proving the
+    // registered-owner branch still returns true only for a registered owner.
     const ownerUid = "d0000001-0000-4000-8000-000000000001";
     const notOwnerUid = "d0000002-0000-4000-8000-000000000002";
 
-    const beforeRegistration = await acting(db, member(ownerUid, "o@x.example", "Owner"), () =>
-      rows(`SELECT is_platform_owner() AS ok`),
-    );
-    expect(beforeRegistration[0]!.ok).toBe(false);
+    async function platformOwnerFor(sub: string): Promise<boolean> {
+      await db.query("SELECT set_config('request.jwt.claims', $1, false)", [JSON.stringify({ sub, role: "authenticated" })]);
+      try {
+        const r = await rows(`SELECT is_platform_owner() AS ok`);
+        return r[0]!.ok as boolean;
+      } finally {
+        await db.query("SELECT set_config('request.jwt.claims', '', false)", []);
+      }
+    }
 
+    expect(await platformOwnerFor(ownerUid)).toBe(false);
     await db.query(`INSERT INTO platform_owners (user_id) VALUES ($1)`, [ownerUid]);
-
-    const afterRegistration = await acting(db, member(ownerUid, "o@x.example", "Owner"), () =>
-      rows(`SELECT is_platform_owner() AS ok`),
-    );
-    expect(afterRegistration[0]!.ok).toBe(true);
-
-    const nonOwner = await acting(db, member(notOwnerUid, "n@x.example", "Non Owner"), () =>
-      rows(`SELECT is_platform_owner() AS ok`),
-    );
-    expect(nonOwner[0]!.ok).toBe(false);
-
-    const anon = await acting(db, { role: "anon" }, () => rows(`SELECT is_platform_owner() AS ok`));
-    expect(anon[0]!.ok).toBe(false);
+    expect(await platformOwnerFor(ownerUid)).toBe(true);
+    expect(await platformOwnerFor(notOwnerUid)).toBe(false);
   });
 });
 
@@ -393,5 +404,188 @@ describe("Case-insensitive email uniqueness within a Shop", () => {
          VALUES ('${ORG_A}', NULL, 'ADMIN.A@apexchartermx.example', 'Dup', 'mechanic', 'invited')`,
       ),
     ).rejects.toThrow(/uq_org_memberships_org_email|duplicate key/i);
+  });
+});
+
+/* ======================================================================== */
+/* 0002 follow-ups                                                          */
+/* ======================================================================== */
+
+describe("Audit actor_name is trusted, not user-editable (0002, finding 6)", () => {
+  beforeEach(async () => {
+    await seedTwoShops(db);
+  });
+
+  it("uses the actor's membership full_name, never the editable user_metadata.full_name", async () => {
+    await acting(
+      db,
+      { sub: A_ADMIN_USER, email: "admin.a@apexchartermx.example", fullName: "Spoofed Name", role: "authenticated" },
+      () =>
+        db.query(
+          `INSERT INTO org_memberships (org_id, user_id, email, full_name, role, status)
+           VALUES ('${ORG_A}', NULL, 'hire2@apexchartermx.example', 'Hire Two', 'mechanic', 'invited')`,
+        ),
+    );
+    const audit = await one(
+      `SELECT actor_name, actor_email, actor_user_id FROM audit_log
+       WHERE table_name='org_memberships' AND action='INSERT'
+       AND after_data->>'email' = 'hire2@apexchartermx.example'`,
+    );
+    expect(audit.actor_name).toBe("Admin A"); // membership full_name, NOT "Spoofed Name"
+    expect(audit.actor_email).toBe("admin.a@apexchartermx.example");
+    expect(audit.actor_user_id).toBe(A_ADMIN_USER);
+  });
+
+  it("falls back to the signed app_metadata full_name when the writer has no membership", async () => {
+    // The service role provisions a Shop (no membership of its own); the org
+    // INSERT audit row must take its name from the signed app_metadata claim.
+    const res = await acting(
+      db,
+      { role: "service_role", email: "svc@apex.example", appFullName: "Service Robot" },
+      () =>
+        db.query<{ provision_shop: { org_id: string } }>(
+          `SELECT provision_shop('Fallback Shop','org-fallback','TL','America/Los_Angeles','admin@fallback.example','Fallback Admin')`,
+        ),
+    );
+    const orgId = res.rows[0]!.provision_shop.org_id;
+    const audit = await one(
+      `SELECT actor_name, actor_email FROM audit_log WHERE table_name='organizations' AND org_id = $1`,
+      [orgId],
+    );
+    expect(audit.actor_name).toBe("Service Robot"); // app_metadata, NOT user_metadata
+    expect(audit.actor_email).toBe("svc@apex.example");
+  });
+});
+
+describe("audit_log is append-only at the grant level (0002, finding 7)", () => {
+  beforeEach(async () => {
+    await seedTwoShops(db);
+  });
+
+  const DIRECT_INSERT = `INSERT INTO audit_log (org_id, table_name, record_id, action)
+                         VALUES ('${ORG_A}', 'organizations', '${ORG_A}', 'INSERT')`;
+
+  it("denies a direct INSERT into audit_log for service_role and authenticated", async () => {
+    await expect(acting(db, SERVICE, () => db.query(DIRECT_INSERT))).rejects.toThrow(/permission denied/i);
+    await expect(acting(db, adminA, () => db.query(DIRECT_INSERT))).rejects.toThrow(/permission denied/i);
+  });
+
+  it("still lets the SECURITY DEFINER capture trigger write audit rows", async () => {
+    const before = await one(`SELECT count(*)::int AS n FROM audit_log WHERE org_id='${ORG_A}'`);
+    await acting(db, adminA, () => db.query(`UPDATE organizations SET due_soon_days=120 WHERE id='${ORG_A}'`));
+    const after = await one(`SELECT count(*)::int AS n FROM audit_log WHERE org_id='${ORG_A}'`);
+    expect(after.n).toBe((before.n as number) + 1);
+  });
+});
+
+describe("Function EXECUTE lockdown (0002, finding 8)", () => {
+  beforeEach(async () => {
+    await seedTwoShops(db);
+  });
+
+  it("denies anon direct EXECUTE on the RLS helper functions", async () => {
+    await expect(acting(db, { role: "anon" }, () => db.query(`SELECT is_active_org_member('${ORG_A}')`))).rejects.toThrow(
+      /permission denied for function is_active_org_member/i,
+    );
+    await expect(
+      acting(db, { role: "anon" }, () => db.query(`SELECT has_org_role('${ORG_A}', ARRAY['admin'])`)),
+    ).rejects.toThrow(/permission denied for function has_org_role/i);
+    await expect(acting(db, { role: "anon" }, () => db.query(`SELECT storage_object_org_id('x/y.pdf')`))).rejects.toThrow(
+      /permission denied for function storage_object_org_id/i,
+    );
+  });
+
+  it("denies anon direct EXECUTE on the trigger functions", async () => {
+    await expect(acting(db, { role: "anon" }, () => db.query(`SELECT record_audit_log()`))).rejects.toThrow(
+      /permission denied for function record_audit_log/i,
+    );
+    await expect(acting(db, { role: "anon" }, () => db.query(`SELECT prevent_truncate()`))).rejects.toThrow(
+      /permission denied for function prevent_truncate/i,
+    );
+  });
+
+  it("keeps authenticated RLS working through the helpers it may still execute", async () => {
+    const orgs = await acting(db, adminA, () => rows(`SELECT id FROM organizations`));
+    expect(orgs.map((o) => o.id)).toEqual([ORG_A]);
+    const self = await acting(db, adminA, () =>
+      rows(`SELECT is_active_org_member('${ORG_A}') AS ok, has_org_role('${ORG_A}', ARRAY['admin']) AS is_admin`),
+    );
+    expect(self[0]!.ok).toBe(true);
+    expect(self[0]!.is_admin).toBe(true);
+  });
+});
+
+describe("Private shop-documents bucket exists (0002, finding 9)", () => {
+  it("registers the shop-documents bucket as private", async () => {
+    const bucket = await one(`SELECT id, name, public FROM storage.buckets WHERE id='shop-documents'`);
+    expect(bucket.name).toBe("shop-documents");
+    expect(bucket.public).toBe(false);
+  });
+});
+
+describe("org_memberships.org_id is immutable (0002, finding 10a)", () => {
+  beforeEach(async () => {
+    await seedTwoShops(db);
+  });
+
+  it("blocks changing a membership's org_id (run as owner to isolate the guard from RLS)", async () => {
+    await expect(
+      db.exec(`UPDATE org_memberships SET org_id='${ORG_B}' WHERE id='${A_INSPECTOR_MEMBER}'`),
+    ).rejects.toThrow(/ORG_ID_IMMUTABLE/);
+  });
+
+  it("still allows updates that leave org_id unchanged", async () => {
+    await db.exec(`UPDATE org_memberships SET certificate_number='C-1' WHERE id='${A_INSPECTOR_MEMBER}'`);
+    const m = await one(`SELECT certificate_number FROM org_memberships WHERE id='${A_INSPECTOR_MEMBER}'`);
+    expect(m.certificate_number).toBe("C-1");
+  });
+});
+
+describe("Open-ended day thresholds are bounded (0002, finding 10b)", () => {
+  beforeEach(async () => {
+    await seedTwoShops(db);
+  });
+
+  it("rejects a missing-tool threshold above the 10-year cap", async () => {
+    await expect(
+      acting(db, adminA, () => db.query(`UPDATE organizations SET missing_tool_threshold_days=4000 WHERE id='${ORG_A}'`)),
+    ).rejects.toThrow(/missing_tool_threshold_days_max|violates check constraint/i);
+  });
+
+  it("rejects a stale-aircraft threshold above the 10-year cap", async () => {
+    await expect(
+      acting(db, adminA, () => db.query(`UPDATE organizations SET stale_aircraft_days=4000 WHERE id='${ORG_A}'`)),
+    ).rejects.toThrow(/stale_aircraft_days_max|violates check constraint/i);
+  });
+
+  it("accepts a value at the cap", async () => {
+    const res = await acting(db, adminA, () =>
+      db.query(`UPDATE organizations SET missing_tool_threshold_days=3650, stale_aircraft_days=3650 WHERE id='${ORG_A}'`),
+    );
+    expect(res.affectedRows).toBe(1);
+  });
+});
+
+describe("Shop time zone validation (0002, finding 10c)", () => {
+  beforeEach(async () => {
+    await seedTwoShops(db);
+  });
+
+  it("rejects an invalid time zone on update", async () => {
+    await expect(
+      acting(db, adminA, () => db.query(`UPDATE organizations SET timezone='Mars/Phobos' WHERE id='${ORG_A}'`)),
+    ).rejects.toThrow(/INVALID_TIMEZONE/);
+  });
+
+  it("accepts a valid IANA time zone on update", async () => {
+    const res = await acting(db, adminA, () =>
+      db.query(`UPDATE organizations SET timezone='America/New_York' WHERE id='${ORG_A}'`),
+    );
+    expect(res.affectedRows).toBe(1);
+  });
+
+  it("rejects an invalid time zone at provisioning time", async () => {
+    const bad = `SELECT provision_shop('Bad TZ Shop','org-bad-tz','TL','Mars/Phobos','a@b.example','A B')`;
+    await expect(acting(db, SERVICE, () => db.query(bad))).rejects.toThrow(/INVALID_TIMEZONE/);
   });
 });

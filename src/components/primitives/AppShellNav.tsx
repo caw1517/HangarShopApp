@@ -122,7 +122,7 @@ export function AppShellNav({ activeView, activeSection, onSelectView, onSelectS
   };
 
   return (
-    <nav className="flex h-full w-56 shrink-0 select-none flex-col border-r border-[#1f242f] bg-[#0c111d] text-white">
+    <nav className="flex h-full w-[232px] shrink-0 select-none flex-col border-r border-[#1f242f] bg-[#0c111d] text-white">
       {/* Shop switcher header block */}
       <div className="relative p-3.5">
         <button

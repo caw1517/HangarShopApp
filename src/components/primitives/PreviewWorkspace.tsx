@@ -8,7 +8,9 @@ interface SectionContent {
   title: string;
   subtitle: string;
   blurb: string;
-  metrics: Array<{ label: string; value: string; sub: string }>;
+  /** What this module will track once it ships. No counts or sample data —
+   * nothing in this slice is backed by real per-Shop records yet. */
+  willTrack: string[];
 }
 
 const CONTENT: Record<PreviewSection, SectionContent> = {
@@ -16,97 +18,57 @@ const CONTENT: Record<PreviewSection, SectionContent> = {
     title: "Dashboard",
     subtitle: "Shop overview",
     blurb:
-      "The Dashboard rolls up calibration, consumable, and audit health into a single Shop-wide view. The multi-Shop foundation and audit log beneath it are live now.",
-    metrics: [
-      { label: "Open work orders", value: "5", sub: "Across Hangar 1" },
-      { label: "Tools tracked", value: "142", sub: "3 calibrations due soon" },
-      { label: "Consumable lots", value: "38", sub: "1 lot expired" },
-      { label: "Active audits", value: "4", sub: "Cabinet C-04 in progress" },
-    ],
+      "The Dashboard will roll up calibration, consumable, and audit health into a single Shop-wide view. The multi-Shop foundation and audit log beneath it are live now.",
+    willTrack: ["Calibration status", "Consumable shelf-life", "Open work orders", "Audit activity"],
   },
   tools: {
     title: "Tools & Calibration",
-    subtitle: "142 calibrated & shop tools",
+    subtitle: "Calibrated & shop tools",
     blurb:
       "The tool register, calibration due-soon tracking, and the overdue quarantine workflow are on the way. Due-soon windows are already configurable per Shop in Shop Settings.",
-    metrics: [
-      { label: "Tools tracked", value: "142", sub: "Tool Crib A" },
-      { label: "Calibration due soon", value: "3", sub: "Within 90 days" },
-      { label: "Overdue", value: "1", sub: "Removed from service" },
-      { label: "Out for cal", value: "2", sub: "At metrology vendor" },
-    ],
+    willTrack: ["Tool register", "Calibration due-soon", "Overdue quarantine", "Out for calibration"],
   },
   consumables: {
     title: "Consumables & Lots",
-    subtitle: "38 active lots · shelf-life tracked",
+    subtitle: "Shelf-life tracked lots",
     blurb:
       "Lot receiving, shelf-life expiry, and cycle-count variance posting are on the way. Shelf-life thresholds are already configurable per Shop.",
-    metrics: [
-      { label: "Active lots", value: "38", sub: "Shelf-life tracked" },
-      { label: "Expiring soon", value: "4", sub: "Within 30 days" },
-      { label: "Expired", value: "1", sub: "Pending disposal" },
-      { label: "Low stock", value: "2", sub: "Below minimum" },
-    ],
+    willTrack: ["Lot receiving", "Shelf-life expiry", "Expired / disposal", "Low-stock alerts"],
   },
   locations: {
     title: "Locations",
-    subtitle: "Hangar 1 › Tool Crib A › 6 storage spots",
+    subtitle: "Hangar, crib & cabinet hierarchy",
     blurb:
       "The location / lot hierarchy — hangars, cribs, cabinets, drawers, and QR-coded spots — is on the way. Each Shop's locations stay fully isolated from every other Shop.",
-    metrics: [
-      { label: "Storage spots", value: "6", sub: "Tool Crib A" },
-      { label: "Cabinets", value: "1", sub: "Cabinet C-04" },
-      { label: "Drawers", value: "4", sub: "D1–D3 · S1" },
-      { label: "QR-coded", value: "6", sub: "100% labeled" },
-    ],
+    willTrack: ["Storage hierarchy", "Cabinets & drawers", "QR-coded spots", "Per-Shop isolation"],
   },
   audits: {
     title: "Audits & Cycle Counts",
-    subtitle: "4 active programs",
+    subtitle: "Cycle counts & facility audits",
     blurb:
       "Cycle counts, facility audits, and the sign-off / segregation flows build on the append-only audit log that is live today. Designated Auditor gating is already enforced per Member.",
-    metrics: [
-      { label: "Active programs", value: "4", sub: "Hangar 1" },
-      { label: "In progress", value: "1", sub: "Cabinet C-04" },
-      { label: "Designated auditors", value: "2", sub: "Apex roster" },
-      { label: "Logged entries", value: "7", sub: "Append-only log" },
-    ],
+    willTrack: ["Cycle counts", "Facility audits", "Sign-off & segregation", "Designated Auditor gating"],
   },
   imports: {
     title: "Imports",
     subtitle: "CSV & ERP batch sync history",
     blurb:
       "Bulk CSV imports and ERP batch sync — for seeding tools, consumables, and locations — are on the way. Every import will be scoped to the active Shop and recorded in the audit log.",
-    metrics: [
-      { label: "Batches this month", value: "0", sub: "No imports yet" },
-      { label: "Rows imported", value: "0", sub: "Across all batches" },
-      { label: "Needs review", value: "0", sub: "Rows with warnings" },
-      { label: "Connected sources", value: "0", sub: "CSV & ERP" },
-    ],
+    willTrack: ["CSV imports", "ERP batch sync", "Row-level review", "Audit-logged runs"],
   },
   fleet: {
     title: "Fleet & Programs",
-    subtitle: "3 aircraft programs",
+    subtitle: "Aircraft & maintenance programs",
     blurb:
       "Aircraft, maintenance programs, and stale-aircraft alerting are on the way. Stale-aircraft thresholds are already configurable per Shop in Shop Settings.",
-    metrics: [
-      { label: "Aircraft", value: "3", sub: "Part 135 fleet" },
-      { label: "Programs", value: "3", sub: "One per tail" },
-      { label: "Stale aircraft", value: "0", sub: "Within threshold" },
-      { label: "Due inspections", value: "2", sub: "Next 30 days" },
-    ],
+    willTrack: ["Aircraft register", "Maintenance programs", "Stale-aircraft alerts", "Due inspections"],
   },
   workorders: {
     title: "Work Orders",
-    subtitle: "Hangar 1 maintenance",
+    subtitle: "Hangar maintenance",
     blurb:
       "Work orders linking tools and consumables to procedure steps are on the way. They will draw on the same per-Shop roles and designations enforced today.",
-    metrics: [
-      { label: "Open", value: "5", sub: "Hangar 1" },
-      { label: "In progress", value: "2", sub: "Assigned" },
-      { label: "On hold", value: "1", sub: "Awaiting parts" },
-      { label: "Done this week", value: "6", sub: "Closed out" },
-    ],
+    willTrack: ["Procedure steps", "Tool & lot draws", "Assignment & status", "Discrepancies"],
   },
 };
 
@@ -134,14 +96,17 @@ export function PreviewWorkspace({ section, onBack }: { section: PreviewSection;
           <StatusPill label="Coming soon" color="gray" />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {content.metrics.map((metric) => (
-            <div key={metric.label} className="rounded-xl border border-[#e4e7ec] bg-white p-5 shadow-[0_1px_2px_rgba(10,13,18,0.04)]">
-              <div className="text-xs font-medium text-[#667085]">{metric.label}</div>
-              <div className="mt-1.5 text-2xl font-semibold tabular-nums text-[#101828]">{metric.value}</div>
-              <div className="mt-1 text-xs text-[#667085]">{metric.sub}</div>
-            </div>
-          ))}
+        <div className="rounded-xl border border-[#e4e7ec] bg-white p-5 shadow-[0_1px_2px_rgba(10,13,18,0.04)]">
+          <p className="text-xs font-medium text-[#667085]">What this module will track</p>
+          <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {content.willTrack.map((item) => (
+              <li key={item} className="flex items-center gap-2 text-sm text-[#344054]">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#d0d5dd]" aria-hidden />
+                {item}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 text-xs text-[#667085]">No data is tracked here yet in this slice.</p>
         </div>
       </div>
     </div>

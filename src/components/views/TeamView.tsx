@@ -291,37 +291,43 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
               setForm={setInviteForm}
               canManage={canManage}
               onCancel={() => setMode("member")}
-              onSubmit={() =>
-                runAction(() => {
-                  domain.mutate((s) =>
-                    s.inviteMember(
-                      domain.principal,
-                      domain.activeOrgId,
-                      {
-                        email: inviteForm.email,
-                        fullName: inviteForm.fullName,
-                        role: inviteForm.role,
-                        isCalDesignee: inviteForm.isCalDesignee,
-                        isDesignatedAuditor: inviteForm.isDesignatedAuditor,
-                        certificateType: inviteForm.certificateType,
-                        certificateNumber: inviteForm.certificateNumber,
-                      },
-                      null,
-                    ),
-                  );
-                  setMessage({ kind: "success", text: `Invited ${inviteForm.fullName} (${inviteForm.email}).` });
-                  setInviteForm({
-                    email: "",
-                    fullName: "",
-                    role: "mechanic",
-                    isCalDesignee: false,
-                    isDesignatedAuditor: false,
-                    certificateType: "N/A",
-                    certificateNumber: "N/A",
-                  });
-                  setMode("member");
-                })
-              }
+              onSubmit={() => {
+                // Capture the name/email before the form is reset so the
+                // success banner can name the invitee.
+                const invitedName = inviteForm.fullName;
+                const invitedEmail = inviteForm.email;
+                runAction(
+                  () => {
+                    domain.mutate((s) =>
+                      s.inviteMember(
+                        domain.principal,
+                        domain.activeOrgId,
+                        {
+                          email: inviteForm.email,
+                          fullName: inviteForm.fullName,
+                          role: inviteForm.role,
+                          isCalDesignee: inviteForm.isCalDesignee,
+                          isDesignatedAuditor: inviteForm.isDesignatedAuditor,
+                          certificateType: inviteForm.certificateType,
+                          certificateNumber: inviteForm.certificateNumber,
+                        },
+                        null,
+                      ),
+                    );
+                    setInviteForm({
+                      email: "",
+                      fullName: "",
+                      role: "mechanic",
+                      isCalDesignee: false,
+                      isDesignatedAuditor: false,
+                      certificateType: "N/A",
+                      certificateNumber: "N/A",
+                    });
+                    setMode("member");
+                  },
+                  `Invited ${invitedName} (${invitedEmail}). Recorded to the compliance audit log.`,
+                );
+              }}
               message={message}
             />
           ) : !selected ? (

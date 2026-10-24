@@ -5,6 +5,7 @@ import { clsx } from "clsx";
 import { useDomain } from "@/lib/domain/context";
 import { CrossTenantNotFoundError } from "@/lib/domain/errors";
 import { ORG_APEX_ID } from "@/lib/domain/seed";
+import { VALID_TIMEZONES } from "@/lib/domain/settings-validation";
 import type { Organization, ProvisionShopReceipt } from "@/lib/domain/types";
 import { cycleNext, shopLocationSuffix, shortShopName } from "@/lib/ui-utils";
 import { useListNav } from "@/lib/use-list-nav";
@@ -41,7 +42,7 @@ const SECTIONS: Array<{
 ];
 
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const TIMEZONES = ["America/Los_Angeles", "America/Denver", "America/Chicago", "America/New_York", "America/Anchorage"];
+const TIMEZONES = VALID_TIMEZONES;
 const CATEGORY_CYCLE = ["all", "Configuration", "Security"] as const;
 type CategoryTab = (typeof CATEGORY_CYCLE)[number];
 
@@ -97,11 +98,17 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
   const isPlatformOwner = domain.principal.isPlatformOwner === true;
 
   const [form, setForm] = useState<SettingsFormState | null>(org ? emptySettingsForm(org) : null);
+  // Re-sync the form from the store on any data change (including our own save).
   useEffect(() => {
     setForm(org ? emptySettingsForm(org) : null);
-    setMessage(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [domain.activeOrgId, domain.version]);
+  // Clear the save banner only when the Shop changes — NOT on every data
+  // version bump, or the success banner our own save sets would be wiped out
+  // immediately (the member-save banner in Team & Roles survives the same way).
+  useEffect(() => {
+    setMessage(null);
+  }, [domain.activeOrgId]);
 
   const canConfigure = org ? domain.store.canConfigureShopSettings(domain.principal, domain.activeOrgId) : false;
 
@@ -185,8 +192,7 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
           <>
           <ListColumnHeader
             title="Shop Configuration & Security"
-            metric={`${SECTIONS.length} of ${SECTIONS.length} enforced (100%)`}
-            progressPct={100}
+            metric={`${SECTIONS.length} ${SECTIONS.length === 1 ? "section" : "sections"}`}
             tabs={[
               { key: "all", label: `All (${SECTIONS.length})` },
               { key: "Configuration", label: "Config" },
@@ -354,10 +360,10 @@ function ShopSettingsForm({
             <NumberInput value={form.dueSoonDays} disabled={!canConfigure} min={1} max={365} onChange={(v) => setForm((p) => ({ ...p, dueSoonDays: v }))} />
           </Field>
           <Field label="Missing-tool alert threshold (days)">
-            <NumberInput value={form.missingToolThresholdDays} disabled={!canConfigure} min={1} onChange={(v) => setForm((p) => ({ ...p, missingToolThresholdDays: v }))} />
+            <NumberInput value={form.missingToolThresholdDays} disabled={!canConfigure} min={1} max={3650} onChange={(v) => setForm((p) => ({ ...p, missingToolThresholdDays: v }))} />
           </Field>
           <Field label="Stale aircraft time threshold (days)">
-            <NumberInput value={form.staleAircraftDays} disabled={!canConfigure} min={1} onChange={(v) => setForm((p) => ({ ...p, staleAircraftDays: v }))} />
+            <NumberInput value={form.staleAircraftDays} disabled={!canConfigure} min={1} max={3650} onChange={(v) => setForm((p) => ({ ...p, staleAircraftDays: v }))} />
           </Field>
         </>
       ) : (
@@ -443,7 +449,7 @@ function ProvisioningPanel({ isPlatformOwner }: { isPlatformOwner: boolean }) {
       </p>
       {!isPlatformOwner && (
         <div className="rounded-lg bg-[#fffaeb] px-3.5 py-2.5 text-sm text-[#93370d] ring-1 ring-inset ring-[#fedf89]">
-          Open the Tweaks pill in the bottom-right corner and switch to Platform Owner to provision a Shop.
+          Only a Platform Owner can provision a new Shop.
         </div>
       )}
       {error && <div className="rounded-lg bg-[#fef3f2] px-3.5 py-2.5 text-sm text-[#b42318] ring-1 ring-inset ring-[#fecdca]">{error}</div>}

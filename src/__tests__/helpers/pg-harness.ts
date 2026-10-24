@@ -13,10 +13,15 @@ import { PGlite, type PGliteInterface } from "@electric-sql/pglite";
  * project. The migration is read from disk and applied unchanged.
  */
 
-export const MIGRATION_PATH = path.resolve(
-  __dirname,
-  "../../../supabase/migrations/0001_slice1_multi_shop_foundation_and_audit_log.sql",
-);
+export const MIGRATIONS_DIR = path.resolve(__dirname, "../../../supabase/migrations");
+
+/** Every migration file, applied in filename order (0001, then 0002, ...). */
+export function migrationFiles(): string[] {
+  return fs
+    .readdirSync(MIGRATIONS_DIR)
+    .filter((f) => f.endsWith(".sql"))
+    .sort();
+}
 
 /** Supabase stand-ins: roles, the auth schema (uid/jwt/role), and the storage schema. */
 const BOOTSTRAP = `
@@ -41,6 +46,14 @@ const BOOTSTRAP = `
   CREATE FUNCTION storage.foldername(name text) RETURNS text[] LANGUAGE sql IMMUTABLE AS $$
     SELECT string_to_array(name, '/');
   $$;
+  -- Minimal stand-in for Supabase's storage.buckets so 0002 can register the
+  -- private shop-documents bucket.
+  CREATE TABLE storage.buckets (
+    id text PRIMARY KEY,
+    name text NOT NULL,
+    public boolean NOT NULL DEFAULT false,
+    created_at timestamptz NOT NULL DEFAULT now()
+  );
   CREATE TABLE storage.objects (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     bucket_id text,
@@ -70,8 +83,10 @@ const POST_MIGRATION_GRANTS = `
 export async function createTestDb(): Promise<PGlite> {
   const db = new PGlite();
   await db.exec(BOOTSTRAP);
-  const migration = fs.readFileSync(MIGRATION_PATH, "utf-8");
-  await db.exec(migration);
+  for (const file of migrationFiles()) {
+    const migration = fs.readFileSync(path.join(MIGRATIONS_DIR, file), "utf-8");
+    await db.exec(migration);
+  }
   await db.exec(POST_MIGRATION_GRANTS);
   return db;
 }
@@ -91,7 +106,10 @@ export interface ActingClaims {
   sub?: string | null;
   role?: "anon" | "authenticated" | "service_role";
   email?: string;
+  /** Goes to user_metadata.full_name — the user-editable, NOT-trusted name. */
   fullName?: string;
+  /** Goes to app_metadata.full_name — a signed, server-controlled fallback name. */
+  appFullName?: string;
 }
 
 /**
@@ -110,6 +128,7 @@ export async function acting<T>(db: PGliteInterface, claims: ActingClaims, fn: (
           role,
           ...(claims.email != null ? { email: claims.email } : {}),
           ...(claims.fullName != null ? { user_metadata: { full_name: claims.fullName } } : {}),
+          ...(claims.appFullName != null ? { app_metadata: { full_name: claims.appFullName } } : {}),
         });
 
   await db.query("SELECT set_config('request.jwt.claims', $1, false)", [jwt ?? ""]);

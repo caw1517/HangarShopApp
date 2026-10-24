@@ -242,6 +242,7 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
                   selected={selected?.id === entry.id}
                   onClick={() => setSelectedId(entry.id)}
                   state="verified"
+                  squareTitle="Recorded"
                   line1={headlineFor(entry)}
                   line2={
                     <>

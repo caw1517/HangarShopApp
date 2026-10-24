@@ -23,6 +23,7 @@ import {
   PLATFORM_OWNER,
 } from "@/lib/domain/seed";
 import { ShopFoundationStore } from "@/lib/domain/store";
+import { SETTINGS_BOUNDS, VALID_TIMEZONES, validateOrgSettings } from "@/lib/domain/settings-validation";
 import type { Principal } from "@/lib/domain/types";
 
 const elena: Principal = { userId: ELENA_USER_ID, email: "elena.rostova@apexchartermx.example", fullName: "Elena Rostova" };
@@ -255,6 +256,31 @@ describe("Per-Shop settings defaults", () => {
     const entry = store.getAuditLog(elena, ORG_APEX_ID).find((e) => e.table_name === "organizations" && e.action === "UPDATE");
     expect(entry?.before_data).toMatchObject({ idle_timeout_minutes: 30 });
     expect(entry?.after_data).toMatchObject({ idle_timeout_minutes: 45 });
+  });
+});
+
+describe("Settings validation bounds & time zone (PR #38 round-2 follow-ups)", () => {
+  it("caps the open-ended day thresholds at 3650, matching the DB CHECKs", () => {
+    // The UI, the store, and the 0002 CHECK constraints must reject the same values.
+    expect(SETTINGS_BOUNDS.missingToolThresholdDays.max).toBe(3650);
+    expect(SETTINGS_BOUNDS.staleAircraftDays.max).toBe(3650);
+
+    expect(validateOrgSettings({ missingToolThresholdDays: 4000 })).toMatch(/between 1 and 3650/);
+    expect(validateOrgSettings({ staleAircraftDays: 4000 })).toMatch(/between 1 and 3650/);
+    expect(validateOrgSettings({ missingToolThresholdDays: 3650, staleAircraftDays: 3650 })).toBeNull();
+
+    expect(() => store.updateOrgSettings(elena, ORG_APEX_ID, { missingToolThresholdDays: 4000 })).toThrow(/between 1 and 3650/);
+    const ok = store.updateOrgSettings(elena, ORG_APEX_ID, { missingToolThresholdDays: 3650 });
+    expect(ok.missing_tool_threshold_days).toBe(3650);
+  });
+
+  it("rejects a time zone that is not in the known list", () => {
+    expect(VALID_TIMEZONES).toContain("America/Los_Angeles");
+    expect(validateOrgSettings({ timezone: "Mars/Phobos" })).toMatch(/recognized Shop time zone/);
+    expect(validateOrgSettings({ timezone: "America/New_York" })).toBeNull();
+    expect(() => store.updateOrgSettings(elena, ORG_APEX_ID, { timezone: "Mars/Phobos" })).toThrow(/recognized Shop time zone/);
+    const ok = store.updateOrgSettings(elena, ORG_APEX_ID, { timezone: "America/New_York" });
+    expect(ok.timezone).toBe("America/New_York");
   });
 });
 

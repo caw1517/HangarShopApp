@@ -42,12 +42,16 @@ export type VerificationState = "verified" | "flagged" | "variance" | "unchecked
  * The small 16px left-rail square that fronts every split-view list row in v5.1:
  * a checked square for verified/active, a swap glyph for a recorded variance,
  * an alert square for anything needing attention, and an empty square otherwise.
+ *
+ * `title` overrides the hover tooltip for the "verified" state. The audit log
+ * passes a neutral "Recorded" so a check-marked row never reads as an
+ * integrity/verification claim about the entry.
  */
-export function VerificationSquare({ state }: { state: VerificationState }) {
+export function VerificationSquare({ state, title }: { state: VerificationState; title?: string }) {
   if (state === "verified") {
     return (
       <div
-        title="Verified"
+        title={title ?? "Verified"}
         className="flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] bg-gray-100 text-gray-700 ring-1 ring-inset ring-gray-300"
       >
         <Check className="h-3 w-3 stroke-[2.25]" />
