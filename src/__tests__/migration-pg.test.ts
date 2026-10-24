@@ -901,6 +901,128 @@ describe("Audit reason write path & no-op UPDATE skip (0003, findings 2 & 8)", (
     expect(after.n).toBe((before.n as number) + 1);
   });
 
+  it("update_org_settings with the current values writes NO audit row and leaves updated_at unchanged (finding 1)", async () => {
+    const cur = await one(
+      `SELECT timezone, tool_id_prefix, due_soon_days, weekly_digest_day, weekly_digest_hour,
+              weekly_digest_minute, missing_tool_threshold_days, stale_aircraft_days,
+              idle_timeout_minutes, updated_at
+       FROM organizations WHERE id='${ORG_A}'`,
+    );
+    const before = await one(`SELECT count(*)::int AS n FROM audit_log WHERE org_id='${ORG_A}'`);
+
+    // No-op: every parameter equals the stored value, so the RPC must not bump
+    // updated_at and the capture trigger must record nothing — even though a
+    // reason is supplied and the UI guard is bypassed (direct API / double submit).
+    await acting(db, adminA, () =>
+      db.query(`SELECT update_org_settings($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, [
+        ORG_A,
+        cur.timezone,
+        cur.tool_id_prefix,
+        cur.due_soon_days,
+        cur.weekly_digest_day,
+        cur.weekly_digest_hour,
+        cur.weekly_digest_minute,
+        cur.missing_tool_threshold_days,
+        cur.stale_aircraft_days,
+        cur.idle_timeout_minutes,
+        "no-op must not be logged",
+      ]),
+    );
+    const afterNoop = await one(`SELECT count(*)::int AS n FROM audit_log WHERE org_id='${ORG_A}'`);
+    const postNoop = await one(`SELECT updated_at FROM organizations WHERE id='${ORG_A}'`);
+    expect(afterNoop.n).toBe(before.n);
+    expect(postNoop.updated_at).toEqual(cur.updated_at);
+
+    // A single real change writes exactly one audit row and bumps updated_at.
+    const newDue = Number(cur.due_soon_days) === 200 ? 201 : 200;
+    await acting(db, adminA, () =>
+      db.query(`SELECT update_org_settings($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`, [
+        ORG_A,
+        cur.timezone,
+        cur.tool_id_prefix,
+        newDue,
+        cur.weekly_digest_day,
+        cur.weekly_digest_hour,
+        cur.weekly_digest_minute,
+        cur.missing_tool_threshold_days,
+        cur.stale_aircraft_days,
+        cur.idle_timeout_minutes,
+        "real change",
+      ]),
+    );
+    const afterReal = await one(`SELECT count(*)::int AS n FROM audit_log WHERE org_id='${ORG_A}'`);
+    const postReal = await one(`SELECT updated_at FROM organizations WHERE id='${ORG_A}'`);
+    expect(afterReal.n).toBe((before.n as number) + 1);
+    expect(postReal.updated_at).not.toEqual(cur.updated_at);
+  });
+
+  it("update_member_role_designations with the current values writes NO audit row and leaves updated_at unchanged (finding 1)", async () => {
+    const cur = await one(
+      `SELECT role, is_cal_designee, is_designated_auditor, updated_at
+       FROM org_memberships WHERE id='${A_MECH_MEMBER}'`,
+    );
+    const before = await one(
+      `SELECT count(*)::int AS n FROM audit_log WHERE table_name='org_memberships' AND record_id='${A_MECH_MEMBER}'`,
+    );
+
+    await acting(db, adminA, () =>
+      db.query(`SELECT update_member_role_designations($1,$2,$3,$4,$5)`, [
+        A_MECH_MEMBER,
+        cur.role,
+        cur.is_cal_designee,
+        cur.is_designated_auditor,
+        "no-op must not be logged",
+      ]),
+    );
+    const afterNoop = await one(
+      `SELECT count(*)::int AS n FROM audit_log WHERE table_name='org_memberships' AND record_id='${A_MECH_MEMBER}'`,
+    );
+    const postNoop = await one(`SELECT updated_at FROM org_memberships WHERE id='${A_MECH_MEMBER}'`);
+    expect(afterNoop.n).toBe(before.n);
+    expect(postNoop.updated_at).toEqual(cur.updated_at);
+
+    await acting(db, adminA, () =>
+      db.query(`SELECT update_member_role_designations($1,$2,$3,$4,$5)`, [
+        A_MECH_MEMBER,
+        "inspector",
+        cur.is_cal_designee,
+        cur.is_designated_auditor,
+        "real change",
+      ]),
+    );
+    const afterReal = await one(
+      `SELECT count(*)::int AS n FROM audit_log WHERE table_name='org_memberships' AND record_id='${A_MECH_MEMBER}'`,
+    );
+    const postReal = await one(`SELECT updated_at FROM org_memberships WHERE id='${A_MECH_MEMBER}'`);
+    expect(afterReal.n).toBe((before.n as number) + 1);
+    expect(postReal.updated_at).not.toEqual(cur.updated_at);
+  });
+
+  it("re-running deactivate_member on an already-deactivated member with the same reason writes NO audit row and leaves updated_at unchanged (finding 1)", async () => {
+    // First deactivation is the real change (one audit row).
+    await acting(db, adminA, () => db.query(`SELECT deactivate_member('${A_MECH_MEMBER}','Left the company')`));
+    const afterFirst = await one(
+      `SELECT count(*)::int AS n FROM audit_log WHERE table_name='org_memberships' AND record_id='${A_MECH_MEMBER}'`,
+    );
+    const firstRow = await one(`SELECT updated_at FROM org_memberships WHERE id='${A_MECH_MEMBER}'`);
+
+    // Re-deactivating with the same reason is a no-op: no new audit row, updated_at untouched.
+    await acting(db, adminA, () => db.query(`SELECT deactivate_member('${A_MECH_MEMBER}','Left the company')`));
+    const afterSecond = await one(
+      `SELECT count(*)::int AS n FROM audit_log WHERE table_name='org_memberships' AND record_id='${A_MECH_MEMBER}'`,
+    );
+    const secondRow = await one(`SELECT updated_at FROM org_memberships WHERE id='${A_MECH_MEMBER}'`);
+    expect(afterSecond.n).toBe(afterFirst.n);
+    expect(secondRow.updated_at).toEqual(firstRow.updated_at);
+
+    // Re-deactivating with a different reason is a real change (one more audit row).
+    await acting(db, adminA, () => db.query(`SELECT deactivate_member('${A_MECH_MEMBER}','Updated: transferred to another shop')`));
+    const afterThird = await one(
+      `SELECT count(*)::int AS n FROM audit_log WHERE table_name='org_memberships' AND record_id='${A_MECH_MEMBER}'`,
+    );
+    expect(afterThird.n).toBe((afterSecond.n as number) + 1);
+  });
+
   it("grants EXECUTE on the write RPCs to authenticated only (anon + service_role denied)", async () => {
     const fns = [
       "update_member_role_designations(uuid, text, boolean, boolean, text)",

@@ -20,6 +20,7 @@ export function TweaksPill() {
   const searchParams = useSearchParams();
   const shopSelectId = useId();
   const roleSelectId = useId();
+  const idleDemoLabelId = useId();
 
   const pushParam = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -95,8 +96,8 @@ export function TweaksPill() {
           </select>
         </div>
 
-        <div>
-          <label className="mb-1 block text-[11px] font-medium text-white/55">Idle timeout demo</label>
+        <div role="group" aria-labelledby={idleDemoLabelId}>
+          <p id={idleDemoLabelId} className="mb-1 block text-[11px] font-medium text-white/55">Idle timeout demo</p>
           <div className="flex gap-2">
             <button
               type="button"

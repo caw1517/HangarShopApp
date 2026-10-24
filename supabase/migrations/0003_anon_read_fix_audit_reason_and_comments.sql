@@ -1,7 +1,8 @@
 -- Slice 1 follow-ups (PR #28 / #38 review round 3)
 -- Issue #28
 --
--- Applies cleanly ON TOP OF 0001 + 0002 (both already live and never edited).
+-- Applies cleanly ON TOP OF 0001 + 0002 (0001 SQL is unchanged — comment-only
+-- edits; 0002 is unchanged), as noted at lines 319-321 below.
 -- Idempotent where reasonable so it can be re-run safely.
 --
 -- Implements the reviewer's round-3 SQL findings:
@@ -218,11 +219,20 @@ DECLARE
   v_row org_memberships;
 BEGIN
   PERFORM set_config('hangar.audit_reason', COALESCE(p_reason, ''), true);
+  -- Only bump updated_at when a real field actually changes, so an identical
+  -- (no-op) call leaves every column — updated_at included — untouched and the
+  -- AFTER UPDATE trigger's WHEN (OLD.* IS DISTINCT FROM NEW.*) guard records no
+  -- audit row. The WHERE still gates on RLS, so a non-admin / cross-Shop caller
+  -- matches zero rows and gets MEMBER_NOT_FOUND exactly as before.
   UPDATE org_memberships
      SET role = p_role,
          is_cal_designee = p_is_cal_designee,
          is_designated_auditor = p_is_designated_auditor,
-         updated_at = now()
+         updated_at = CASE
+           WHEN role IS DISTINCT FROM p_role
+             OR is_cal_designee IS DISTINCT FROM p_is_cal_designee
+             OR is_designated_auditor IS DISTINCT FROM p_is_designated_auditor
+           THEN now() ELSE updated_at END
    WHERE id = p_member_id
    RETURNING * INTO v_row;
   IF NOT FOUND THEN
@@ -250,11 +260,21 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
   PERFORM set_config('hangar.audit_reason', p_reason, true);
+  -- Re-deactivating an already-deactivated member with the same reason is a
+  -- no-op: leave status/deactivated_at/deactivation_reason and updated_at as-is
+  -- so no audit row is written. A status transition or a changed reason bumps
+  -- deactivated_at and updated_at. The WHERE keeps RLS gating intact.
   UPDATE org_memberships
      SET status = 'deactivated',
-         deactivated_at = now(),
          deactivation_reason = p_reason,
-         updated_at = now()
+         deactivated_at = CASE
+           WHEN status IS DISTINCT FROM 'deactivated'
+             OR deactivation_reason IS DISTINCT FROM p_reason
+           THEN now() ELSE deactivated_at END,
+         updated_at = CASE
+           WHEN status IS DISTINCT FROM 'deactivated'
+             OR deactivation_reason IS DISTINCT FROM p_reason
+           THEN now() ELSE updated_at END
    WHERE id = p_member_id
    RETURNING * INTO v_row;
   IF NOT FOUND THEN
@@ -287,6 +307,10 @@ DECLARE
   v_row organizations;
 BEGIN
   PERFORM set_config('hangar.audit_reason', COALESCE(p_reason, ''), true);
+  -- Only bump updated_at when at least one settings field actually changes, so
+  -- an identical (no-op) save leaves every column — updated_at included —
+  -- untouched and the AFTER UPDATE trigger records no audit row. The WHERE still
+  -- gates on RLS, so a non-admin / cross-Shop caller gets ORG_NOT_FOUND.
   UPDATE organizations
      SET timezone = p_timezone,
          tool_id_prefix = p_tool_id_prefix,
@@ -297,7 +321,17 @@ BEGIN
          missing_tool_threshold_days = p_missing_tool_threshold_days,
          stale_aircraft_days = p_stale_aircraft_days,
          idle_timeout_minutes = p_idle_timeout_minutes,
-         updated_at = now()
+         updated_at = CASE
+           WHEN timezone IS DISTINCT FROM p_timezone
+             OR tool_id_prefix IS DISTINCT FROM p_tool_id_prefix
+             OR due_soon_days IS DISTINCT FROM p_due_soon_days
+             OR weekly_digest_day IS DISTINCT FROM p_weekly_digest_day
+             OR weekly_digest_hour IS DISTINCT FROM p_weekly_digest_hour
+             OR weekly_digest_minute IS DISTINCT FROM p_weekly_digest_minute
+             OR missing_tool_threshold_days IS DISTINCT FROM p_missing_tool_threshold_days
+             OR stale_aircraft_days IS DISTINCT FROM p_stale_aircraft_days
+             OR idle_timeout_minutes IS DISTINCT FROM p_idle_timeout_minutes
+           THEN now() ELSE updated_at END
    WHERE id = p_org_id
    RETURNING * INTO v_row;
   IF NOT FOUND THEN

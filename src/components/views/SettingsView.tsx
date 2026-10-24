@@ -5,7 +5,7 @@ import { clsx } from "clsx";
 import { useDomain } from "@/lib/domain/context";
 import { CrossTenantNotFoundError } from "@/lib/domain/errors";
 import { ORG_APEX_ID } from "@/lib/domain/seed";
-import { VALID_TIMEZONES } from "@/lib/domain/settings-validation";
+import { VALID_TIMEZONES, validateOrgSettings } from "@/lib/domain/settings-validation";
 import type { Organization, ProvisionShopReceipt } from "@/lib/domain/types";
 import { cycleNext, shopLocationSuffix, shortShopName } from "@/lib/ui-utils";
 import { useListNav } from "@/lib/use-list-nav";
@@ -147,6 +147,28 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
       form.staleAircraftDays !== org.stale_aircraft_days ||
       form.idleTimeoutMinutes !== org.idle_timeout_minutes);
 
+  // Recompute the validation message live from the current draft (same rules as
+  // the store and the DB CHECKs). Because a section/Shop change resets the draft
+  // to the saved row, only the fields the user actually edited in THIS section
+  // can be invalid, so this stays per-section scoped. Save requires dirty && valid.
+  const validationError = form ? validateOrgSettings(form) : null;
+
+  // Any user edit clears a stale post-save banner (a fixed value must not leave
+  // the old error on screen). The store re-sync after a save calls setForm/set
+  // Message directly, not these, so the success banner still survives the bump.
+  const editForm = (updater: (prev: SettingsFormState) => SettingsFormState) => {
+    setForm((prev) => (prev ? updater(prev) : prev));
+    setMessage(null);
+  };
+  const editReason = (value: string) => {
+    setReason(value);
+    setMessage(null);
+  };
+
+  const banner: { kind: "error" | "success"; text: string } | null = validationError
+    ? { kind: "error", text: validationError }
+    : message;
+
   const handleSave = () => {
     if (!org || !form) return;
     try {
@@ -280,14 +302,14 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
           </div>
 
           <div className="max-w-3xl flex-1 space-y-5 px-7 py-5">
-            {message && (selected.key === "thresholds" || selected.key === "digest") && (
+            {banner && (selected.key === "thresholds" || selected.key === "digest") && (
               <div
                 className={clsx(
                   "rounded-lg px-3.5 py-2.5 text-sm ring-1 ring-inset",
-                  message.kind === "error" ? "bg-[#fef3f2] text-[#b42318] ring-[#fecdca]" : "bg-[#ecfdf3] text-[#067647] ring-[#abefc6]",
+                  banner.kind === "error" ? "bg-[#fef3f2] text-[#b42318] ring-[#fecdca]" : "bg-[#ecfdf3] text-[#067647] ring-[#abefc6]",
                 )}
               >
-                {message.text}
+                {banner.text}
               </div>
             )}
 
@@ -297,10 +319,10 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
               ) : (
                 <ShopSettingsForm
                   form={form}
-                  setForm={setForm as (updater: (prev: SettingsFormState) => SettingsFormState) => void}
+                  setForm={editForm}
                   canConfigure={canConfigure}
                   reason={reason}
-                  setReason={setReason}
+                  setReason={editReason}
                   section={selected.key}
                 />
               ))}
@@ -322,7 +344,7 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
           >
             <button
               type="button"
-              disabled={!canConfigure || selected.key === "provisioning" || selected.key === "rls" || !formDirty}
+              disabled={!canConfigure || selected.key === "provisioning" || selected.key === "rls" || !formDirty || !!validationError}
               onClick={handleSave}
               className="uui-btn-primary h-9 rounded-md px-3.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50"
             >
