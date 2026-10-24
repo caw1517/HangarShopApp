@@ -8,13 +8,15 @@ export const FOUNDATION_TABS: Array<{ key: WorkspaceView; label: string }> = [
   { key: "settings", label: "Shop Settings" },
 ];
 
-/** The seven planned (non-Slice-1) primary nav destinations rendered as clean
- * v5.1 preview workspaces so every rail item is live and interactive. */
+/** The primary nav destinations beyond Slice 1's live Administration modules,
+ * rendered as clean v5.1 preview workspaces so every rail item is live and
+ * interactive. */
 export type PreviewSection =
   | "dashboard"
   | "tools"
   | "consumables"
   | "locations"
   | "audits"
+  | "imports"
   | "fleet"
   | "workorders";

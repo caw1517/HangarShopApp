@@ -30,6 +30,7 @@ export {
   Lock01 as Lock,
   Shield01 as Shield,
   Building02 as Building,
+  UploadCloud01 as Upload,
   Mail01 as Mail,
   AlertCircle,
   SwitchHorizontal01,

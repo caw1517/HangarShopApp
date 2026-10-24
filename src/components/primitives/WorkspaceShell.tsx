@@ -1,7 +1,7 @@
 "use client";
 
 import { clsx } from "clsx";
-import { ChevronDown, Hourglass, Search, SlidersHorizontal } from "@/components/primitives/icons";
+import { ChevronDown, Search, SlidersHorizontal } from "@/components/primitives/icons";
 import { FilterLines } from "@untitledui/icons";
 import { StatusPill, VerificationSquare, type VerificationState } from "@/components/primitives/StatusPill";
 import { FOUNDATION_TABS, type WorkspaceView } from "@/components/primitives/workspace";
@@ -18,9 +18,7 @@ export interface ContextHeaderProps {
   search: string;
   onSearch: (value: string) => void;
   searchPlaceholder: string;
-  idleLabel: string;
-  onPreviewIdle: () => void;
-  primary: { label: string; onClick: () => void; disabled?: boolean };
+  primary?: { label: string; onClick: () => void; disabled?: boolean };
 }
 
 export function ContextHeaderBar({
@@ -31,8 +29,6 @@ export function ContextHeaderBar({
   search,
   onSearch,
   searchPlaceholder,
-  idleLabel,
-  onPreviewIdle,
   primary,
 }: ContextHeaderProps) {
   return (
@@ -69,22 +65,16 @@ export function ContextHeaderBar({
             className="h-8 w-full rounded-md border border-[#e4e7ec] bg-[#f8fafc] pl-8 pr-3 text-xs text-[#101828] placeholder:text-[#64748b] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#155eef]"
           />
         </div>
-        <button
-          type="button"
-          onClick={onPreviewIdle}
-          className="uui-btn-secondary inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-xs font-medium tabular-nums"
-        >
-          <Hourglass className="h-3.5 w-3.5 text-[#64748b]" />
-          {idleLabel}
-        </button>
-        <button
-          type="button"
-          onClick={primary.onClick}
-          disabled={primary.disabled}
-          className="uui-btn-primary inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {primary.label}
-        </button>
+        {primary && (
+          <button
+            type="button"
+            onClick={primary.onClick}
+            disabled={primary.disabled}
+            className="uui-btn-primary inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-md px-3 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {primary.label}
+          </button>
+        )}
       </div>
     </header>
   );
@@ -187,7 +177,8 @@ export function DetailScroll({ children }: { children: React.ReactNode }) {
 export interface ListColumnHeaderProps {
   title: string;
   metric: string;
-  progressPct: number;
+  /** Optional progress bar (0–100). Omit for lists that aren't a % of a whole. */
+  progressPct?: number;
   tabs: Array<{ key: string; label: string }>;
   activeTab: string;
   onSelectTab: (key: string) => void;
@@ -200,9 +191,11 @@ export function ListColumnHeader({ title, metric, progressPct, tabs, activeTab, 
         <span className="text-sm font-semibold text-[#101828]">{title}</span>
         <span className="shrink-0 text-xs tabular-nums text-[#64748b]">{metric}</span>
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
-        <div className="h-full bg-[#155eef] transition-all" style={{ width: `${progressPct}%` }} />
-      </div>
+      {progressPct != null && (
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+          <div className="h-full bg-[#155eef] transition-all" style={{ width: `${progressPct}%` }} />
+        </div>
+      )}
       <div className={clsx("grid rounded-lg bg-[#f2f4f7] p-0.5", tabs.length === 2 ? "grid-cols-2" : "grid-cols-3")}>
         {tabs.map((tab) => (
           <button
@@ -238,8 +231,8 @@ export function ListRow({ selected, onClick, state, line1, line2, pill, subLabel
       type="button"
       onClick={onClick}
       className={clsx(
-        "flex w-full items-start gap-3 border-l-[3px] px-4 py-3.5 text-left transition",
-        selected ? "border-l-[#155eef] bg-[#eff4ff]" : "border-l-transparent bg-white hover:bg-gray-50",
+        "flex w-full items-start gap-3 px-4 py-3.5 text-left transition",
+        selected ? "bg-gray-100" : "bg-white hover:bg-gray-50",
       )}
     >
       <div className="mt-0.5">

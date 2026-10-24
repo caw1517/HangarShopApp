@@ -16,7 +16,7 @@ const CONTENT: Record<PreviewSection, SectionContent> = {
     title: "Dashboard",
     subtitle: "Shop overview",
     blurb:
-      "The Dashboard rolls up calibration, consumable, and audit health into a single Shop-wide view. It arrives in a later Slice — the multi-Shop foundation and audit log beneath it are live now.",
+      "The Dashboard rolls up calibration, consumable, and audit health into a single Shop-wide view. The multi-Shop foundation and audit log beneath it are live now.",
     metrics: [
       { label: "Open work orders", value: "5", sub: "Across Hangar 1" },
       { label: "Tools tracked", value: "142", sub: "3 calibrations due soon" },
@@ -28,7 +28,7 @@ const CONTENT: Record<PreviewSection, SectionContent> = {
     title: "Tools & Calibration",
     subtitle: "142 calibrated & shop tools",
     blurb:
-      "Tool register, calibration due-soon tracking, and the overdue quarantine workflow land in a later Slice. Due-soon windows are already configurable per Shop in Shop Settings.",
+      "The tool register, calibration due-soon tracking, and the overdue quarantine workflow are on the way. Due-soon windows are already configurable per Shop in Shop Settings.",
     metrics: [
       { label: "Tools tracked", value: "142", sub: "Tool Crib A" },
       { label: "Calibration due soon", value: "3", sub: "Within 90 days" },
@@ -40,7 +40,7 @@ const CONTENT: Record<PreviewSection, SectionContent> = {
     title: "Consumables & Lots",
     subtitle: "38 active lots · shelf-life tracked",
     blurb:
-      "Lot receiving, shelf-life expiry, and cycle-count variance posting arrive in a later Slice. Shelf-life thresholds are already configurable per Shop.",
+      "Lot receiving, shelf-life expiry, and cycle-count variance posting are on the way. Shelf-life thresholds are already configurable per Shop.",
     metrics: [
       { label: "Active lots", value: "38", sub: "Shelf-life tracked" },
       { label: "Expiring soon", value: "4", sub: "Within 30 days" },
@@ -52,7 +52,7 @@ const CONTENT: Record<PreviewSection, SectionContent> = {
     title: "Locations",
     subtitle: "Hangar 1 › Tool Crib A › 6 storage spots",
     blurb:
-      "The location / lot hierarchy — hangars, cribs, cabinets, drawers, and QR-coded spots — is modeled in a later Slice. Each Shop's locations stay fully isolated from every other Shop.",
+      "The location / lot hierarchy — hangars, cribs, cabinets, drawers, and QR-coded spots — is on the way. Each Shop's locations stay fully isolated from every other Shop.",
     metrics: [
       { label: "Storage spots", value: "6", sub: "Tool Crib A" },
       { label: "Cabinets", value: "1", sub: "Cabinet C-04" },
@@ -69,14 +69,26 @@ const CONTENT: Record<PreviewSection, SectionContent> = {
       { label: "Active programs", value: "4", sub: "Hangar 1" },
       { label: "In progress", value: "1", sub: "Cabinet C-04" },
       { label: "Designated auditors", value: "2", sub: "Apex roster" },
-      { label: "Verified entries", value: "7", sub: "Append-only log" },
+      { label: "Logged entries", value: "7", sub: "Append-only log" },
+    ],
+  },
+  imports: {
+    title: "Imports",
+    subtitle: "CSV & ERP batch sync history",
+    blurb:
+      "Bulk CSV imports and ERP batch sync — for seeding tools, consumables, and locations — are on the way. Every import will be scoped to the active Shop and recorded in the audit log.",
+    metrics: [
+      { label: "Batches this month", value: "0", sub: "No imports yet" },
+      { label: "Rows imported", value: "0", sub: "Across all batches" },
+      { label: "Needs review", value: "0", sub: "Rows with warnings" },
+      { label: "Connected sources", value: "0", sub: "CSV & ERP" },
     ],
   },
   fleet: {
     title: "Fleet & Programs",
     subtitle: "3 aircraft programs",
     blurb:
-      "Aircraft, maintenance programs, and stale-aircraft alerting arrive in a later Slice. Stale-aircraft thresholds are already configurable per Shop in Shop Settings.",
+      "Aircraft, maintenance programs, and stale-aircraft alerting are on the way. Stale-aircraft thresholds are already configurable per Shop in Shop Settings.",
     metrics: [
       { label: "Aircraft", value: "3", sub: "Part 135 fleet" },
       { label: "Programs", value: "3", sub: "One per tail" },
@@ -88,7 +100,7 @@ const CONTENT: Record<PreviewSection, SectionContent> = {
     title: "Work Orders",
     subtitle: "Hangar 1 maintenance",
     blurb:
-      "Work orders linking tools and consumables to procedure steps land in a later Slice. They will draw on the same per-Shop roles and designations enforced today.",
+      "Work orders linking tools and consumables to procedure steps are on the way. They will draw on the same per-Shop roles and designations enforced today.",
     metrics: [
       { label: "Open", value: "5", sub: "Hangar 1" },
       { label: "In progress", value: "2", sub: "Assigned" },
@@ -119,7 +131,7 @@ export function PreviewWorkspace({ section, onBack }: { section: PreviewSection;
             <h2 className="text-base font-semibold text-[#101828]">{content.title}</h2>
             <p className="mt-1.5 text-sm text-[#475467]">{content.blurb}</p>
           </div>
-          <StatusPill label="Planned Slice" color="gray" />
+          <StatusPill label="Coming soon" color="gray" />
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

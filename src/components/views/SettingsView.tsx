@@ -36,7 +36,7 @@ const SECTIONS: Array<{
 }> = [
   { key: "thresholds", label: "Compliance Thresholds", blurb: "Due-soon, missing-tool & stale-aircraft windows", category: "Configuration", icon: SettingsIcon },
   { key: "digest", label: "Weekly Digest & Idle Timeout", blurb: "Scheduled summary and idle sign-out", category: "Configuration", icon: SettingsIcon },
-  { key: "provisioning", label: "New Shop Provisioning", blurb: "Platform Owner blind provisioning", category: "Security", icon: Building },
+  { key: "provisioning", label: "New Shop Provisioning", blurb: "Create a new Shop and invite its first Admin", category: "Security", icon: Building },
   { key: "rls", label: "Shop Isolation & Data Security", blurb: "Who can view and change each area", category: "Security", icon: Lock },
 ];
 
@@ -154,8 +154,6 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
       search={search}
       onSearch={setSearch}
       searchPlaceholder="Search settings…"
-      idleLabel={`Idle Timeout (${idleMinutes}m)`}
-      onPreviewIdle={chrome.onPreviewIdle}
       primary={{ label: "+ Provision Shop", onClick: () => setSection("provisioning") }}
     />
   );
@@ -267,7 +265,7 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
 
             {(selected.key === "thresholds" || selected.key === "digest") &&
               (accessDenied || !org || !form ? (
-                <p className="text-sm text-[#667085]">This persona is not an active Member of the selected Shop, so Shop settings are read-only here.</p>
+                <p className="text-sm text-[#667085]">You are not an active Member of the selected Shop, so Shop settings are read-only here.</p>
               ) : (
                 <ShopSettingsForm
                   form={form}
@@ -288,15 +286,12 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
             left={
               <>
                 <div className="text-xs tabular-nums text-gray-500">
-                  {org ? `Last updated ${org.updated_at.slice(0, 10)} · changes recorded to the audit log` : "Read-only for this persona"}
+                  {org ? `Last updated ${org.updated_at.slice(0, 10)} · changes recorded to the audit log` : "Read-only"}
                 </div>
                 <div className="text-[11px] text-gray-400">J / K to navigate · ↵ save</div>
               </>
             }
           >
-            <button type="button" onClick={domain.idlePreviewWarning} className="uui-btn-secondary h-9 rounded-md px-3 text-xs font-medium">
-              Preview idle warning
-            </button>
             <button
               type="button"
               disabled={!canConfigure || selected.key === "provisioning" || selected.key === "rls"}
@@ -474,7 +469,7 @@ function ProvisioningPanel({ isPlatformOwner }: { isPlatformOwner: boolean }) {
         onClick={handleProvision}
         className="uui-btn-primary rounded-lg px-3.5 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
       >
-        Provision Shop (blind)
+        Provision Shop
       </button>
 
       {receipt && (

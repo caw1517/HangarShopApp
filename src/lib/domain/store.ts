@@ -7,6 +7,7 @@ import {
   NotAuthorizedError,
 } from "./errors";
 import { seedAuditLog, seedMemberships, seedOrganizations } from "./seed";
+import { validateOrgSettings } from "./settings-validation";
 import type {
   AuditAction,
   AuditLogEntry,
@@ -347,6 +348,9 @@ export class ShopFoundationStore {
     const org = this.organizations.find((o) => o.id === orgId);
     if (!org) throw new CrossTenantNotFoundError();
 
+    const validationError = validateOrgSettings(input);
+    if (validationError) throw new Error(validationError);
+
     const before = { ...org };
     const patch: Partial<Organization> = {};
     if (input.timezone !== undefined) patch.timezone = input.timezone;
@@ -376,7 +380,7 @@ export class ShopFoundationStore {
   }
 
   // ---------------------------------------------------------------------
-  // Platform Owner blind provisioning (ADR-0001)
+  // Platform Owner Shop provisioning (ADR-0001)
   // ---------------------------------------------------------------------
 
   provisionShopAsPlatformOwner(principal: Principal, input: ProvisionShopInput): ProvisionShopReceipt {
@@ -429,14 +433,14 @@ export class ShopFoundationStore {
     this.memberships.push(adminMembership);
 
     const platformActor = { userId: principal.userId, email: principal.email, name: principal.fullName };
-    this.appendAuditLog(orgId, platformActor, "organizations", org.id, "INSERT", "Platform Owner blind provisioning", null, org as unknown as Record<string, unknown>);
+    this.appendAuditLog(orgId, platformActor, "organizations", org.id, "INSERT", "Shop provisioned by Platform Owner", null, org as unknown as Record<string, unknown>);
     this.appendAuditLog(
       orgId,
       platformActor,
       "org_memberships",
       adminMembership.id,
       "INSERT",
-      "Platform Owner blind provisioning — initial Admin invitation",
+      "Shop provisioned by Platform Owner — initial Admin invitation",
       null,
       adminMembership as unknown as Record<string, unknown>,
     );

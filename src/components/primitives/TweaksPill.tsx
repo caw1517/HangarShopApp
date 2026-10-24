@@ -77,7 +77,7 @@ export function TweaksPill() {
         </div>
 
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-white/55">Persona / role</label>
+          <label className="mb-1 block text-[11px] font-medium text-white/55">Role</label>
           <select
             value={domain.personaKey}
             onChange={(e) => handlePersonaChange(e.target.value as PersonaKey)}
@@ -91,13 +91,25 @@ export function TweaksPill() {
           </select>
         </div>
 
-        <button
-          type="button"
-          onClick={domain.idlePreviewWarning}
-          className="w-full rounded-md border border-white/10 bg-[#161b26] px-3 py-1.5 text-xs font-medium text-white/90 transition hover:bg-[#1f242f]"
-        >
-          Preview idle warning
-        </button>
+        <div>
+          <label className="mb-1 block text-[11px] font-medium text-white/55">Idle timeout demo</label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={domain.idlePreviewWarning}
+              className="flex-1 rounded-md border border-white/10 bg-[#161b26] px-3 py-1.5 text-xs font-medium text-white/90 transition hover:bg-[#1f242f]"
+            >
+              Preview warning
+            </button>
+            <button
+              type="button"
+              onClick={domain.idlePreviewTimeout}
+              className="flex-1 rounded-md border border-white/10 bg-[#161b26] px-3 py-1.5 text-xs font-medium text-white/90 transition hover:bg-[#1f242f]"
+            >
+              Preview timeout
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

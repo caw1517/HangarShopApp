@@ -1,10 +1,11 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { domainStore } from "./instance";
 import { IdleSessionTracker, type IdleSessionState } from "./idle-session";
 import { PERSONAS, type PersonaKey } from "./personas";
 import { ORG_APEX_ID } from "./seed";
+import { getSupabaseClient } from "@/lib/supabase/client";
 import type { ShopFoundationStore } from "./store";
 import type { Principal } from "./types";
 
@@ -22,6 +23,9 @@ interface DomainContextValue {
   idlePreviewWarning: () => void;
   idlePreviewTimeout: () => void;
   idleReset: () => void;
+  signedOut: boolean;
+  signOut: () => void;
+  signInAgain: () => void;
 }
 
 const DomainContext = createContext<DomainContextValue | null>(null);
@@ -31,6 +35,7 @@ export function DomainProvider({ children }: { children: React.ReactNode }) {
   const [activeOrgId, setActiveOrgId] = useState<string>(ORG_APEX_ID);
   const [version, setVersion] = useState(0);
   const [idleState, setIdleState] = useState<IdleSessionState>("active");
+  const [signedOut, setSignedOut] = useState(false);
 
   const principal = PERSONAS[personaKey].principal;
 
@@ -48,6 +53,28 @@ export function DomainProvider({ children }: { children: React.ReactNode }) {
     idleTrackerRef.current = new IdleSessionTracker(idleMinutes);
     setIdleState("active");
   }
+
+  // Actually end the session: sign out of Supabase when a client is configured
+  // (no-op in demo mode where env vars are absent), clear the local idle clock,
+  // and drop to the signed-out screen.
+  const signOut = useCallback(() => {
+    const client = getSupabaseClient();
+    if (client) void client.auth.signOut().catch(() => {});
+    idleTrackerRef.current.reset();
+    setIdleState("active");
+    setSignedOut(true);
+  }, []);
+
+  const signInAgain = useCallback(() => {
+    idleTrackerRef.current.reset();
+    setIdleState("active");
+    setSignedOut(false);
+  }, []);
+
+  // Reaching the idle timeout itself signs the user out, not just shows a dialog.
+  useEffect(() => {
+    if (idleState === "timed-out" && !signedOut) signOut();
+  }, [idleState, signedOut, signOut]);
 
   useEffect(() => {
     const ACTIVITY_EVENTS = ["mousemove", "keydown", "mousedown", "touchstart"] as const;
@@ -101,9 +128,12 @@ export function DomainProvider({ children }: { children: React.ReactNode }) {
         idleTrackerRef.current.reset();
         setIdleState(idleTrackerRef.current.state);
       },
+      signedOut,
+      signOut,
+      signInAgain,
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }),
-    [principal, personaKey, activeOrgId, version, idleState, idleMinutes],
+    [principal, personaKey, activeOrgId, version, idleState, idleMinutes, signedOut, signOut, signInAgain],
   );
 
   return <DomainContext.Provider value={value}>{children}</DomainContext.Provider>;

@@ -17,7 +17,6 @@ import type { PreviewSection, WorkspaceView } from "@/components/primitives/work
 export interface ViewChrome {
   activeView: WorkspaceView;
   onSelectView: (view: WorkspaceView) => void;
-  onPreviewIdle: () => void;
 }
 
 const PREVIEW_SECTIONS: PreviewSection[] = [
@@ -26,6 +25,7 @@ const PREVIEW_SECTIONS: PreviewSection[] = [
   "consumables",
   "locations",
   "audits",
+  "imports",
   "fleet",
   "workorders",
 ];
@@ -96,8 +96,11 @@ function AppRootInner() {
   const chrome: ViewChrome = {
     activeView: view,
     onSelectView,
-    onPreviewIdle: domain.idlePreviewWarning,
   };
+
+  if (domain.signedOut) {
+    return <SignedOutScreen onSignIn={domain.signInAgain} />;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#f9fafb]">
@@ -120,6 +123,29 @@ function AppRootInner() {
       </div>
       <IdleTimeoutModal />
       <TweaksPill />
+    </div>
+  );
+}
+
+function SignedOutScreen({ onSignIn }: { onSignIn: () => void }) {
+  return (
+    <div className="flex h-screen flex-col items-center justify-center bg-[#0c111d] px-4 text-center">
+      <div className="w-full max-w-sm rounded-xl bg-white p-8 shadow-xl">
+        <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-[#155eef] text-sm font-semibold text-white">
+          HS
+        </div>
+        <h1 className="text-lg font-semibold text-[#101828]">You&apos;ve been signed out</h1>
+        <p className="mt-2 text-sm text-[#475467]">
+          Your session ended after the configured idle timeout. Sign in again to return to your Shop.
+        </p>
+        <button
+          type="button"
+          onClick={onSignIn}
+          className="uui-btn-primary mt-6 w-full rounded-lg px-3.5 py-2.5 text-sm font-medium"
+        >
+          Sign in again
+        </button>
+      </div>
     </div>
   );
 }

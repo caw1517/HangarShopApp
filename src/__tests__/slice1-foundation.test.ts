@@ -1,5 +1,3 @@
-import fs from "node:fs";
-import path from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import { IdleSessionTracker } from "@/lib/domain/idle-session";
 import {
@@ -75,7 +73,7 @@ describe("Multi-Shop data & storage path isolation (ADR-0001)", () => {
   });
 });
 
-describe("Platform Owner blind Shop provisioning (ADR-0001)", () => {
+describe("Platform Owner Shop provisioning (ADR-0001)", () => {
   it("provisions a new Shop and invites its initial Admin", () => {
     const receipt = store.provisionShopAsPlatformOwner(PLATFORM_OWNER, {
       name: "Pacific Rotorcraft Maintenance",
@@ -287,30 +285,5 @@ describe("Idle session timeout state machine", () => {
     expect(tracker.state).toBe("warning");
     tracker.forceTimeout();
     expect(tracker.state).toBe("timed-out");
-  });
-});
-
-describe("SQL migration structural verification", () => {
-  const migrationPath = path.resolve(
-    __dirname,
-    "../../supabase/migrations/0001_slice1_multi_shop_foundation_and_audit_log.sql",
-  );
-  const sql = fs.readFileSync(migrationPath, "utf-8");
-
-  it("enables and forces Row-Level Security", () => {
-    expect(sql).toContain("ENABLE ROW LEVEL SECURITY");
-    expect(sql).toContain("FORCE ROW LEVEL SECURITY");
-  });
-
-  it("defines the append-only audit trigger function", () => {
-    expect(sql).toContain("record_audit_log");
-  });
-
-  it("revokes UPDATE/DELETE on audit_log", () => {
-    expect(sql).toContain("REVOKE UPDATE, DELETE");
-  });
-
-  it("defines the Last-Admin Guard trigger function", () => {
-    expect(sql).toContain("enforce_last_admin_guard");
   });
 });

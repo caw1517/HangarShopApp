@@ -14,6 +14,7 @@ import {
   Plane,
   Settings,
   ShieldCheck,
+  Upload,
   Users,
   Wrench,
 } from "@/components/primitives/icons";
@@ -23,14 +24,18 @@ import { CrossTenantNotFoundError } from "@/lib/domain/errors";
 import { initials, shopLocationSuffix, shortShopName, titleCase } from "@/lib/ui-utils";
 import { FOUNDATION_TABS, type PreviewSection, type WorkspaceView } from "@/components/primitives/workspace";
 
-const PRIMARY_NAV: Array<{ key: PreviewSection; label: string; icon: typeof LayoutDashboard; count?: number }> = [
+// These sections are not yet backed by per-Shop data, so they carry no count
+// badge (a hard-coded count would read as real inventory and be identical in
+// every Shop). Counts return once each module ships its own data.
+const PRIMARY_NAV: Array<{ key: PreviewSection; label: string; icon: typeof LayoutDashboard }> = [
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { key: "tools", label: "Tools & Calibration", icon: Wrench, count: 142 },
-  { key: "consumables", label: "Consumables & Lots", icon: Boxes, count: 38 },
-  { key: "locations", label: "Locations", icon: MapPin, count: 6 },
-  { key: "audits", label: "Audits & Cycle Counts", icon: ClipboardCheck, count: 4 },
-  { key: "fleet", label: "Fleet & Programs", icon: Plane, count: 3 },
-  { key: "workorders", label: "Work Orders", icon: FileText, count: 5 },
+  { key: "tools", label: "Tools & Calibration", icon: Wrench },
+  { key: "consumables", label: "Consumables & Lots", icon: Boxes },
+  { key: "locations", label: "Locations", icon: MapPin },
+  { key: "audits", label: "Audits & Cycle Counts", icon: ClipboardCheck },
+  { key: "imports", label: "Imports", icon: Upload },
+  { key: "fleet", label: "Fleet & Programs", icon: Plane },
+  { key: "workorders", label: "Work Orders", icon: FileText },
 ];
 
 const ADMIN_ICON: Record<WorkspaceView, typeof Users> = {
@@ -67,7 +72,7 @@ export function AppShellNav({ activeView, activeSection, onSelectView, onSelectS
   };
 
   // Shop header derivation (two-line title + brand mark), with a graceful
-  // fallback for personas with no read access to the active Shop.
+  // fallback for a signed-in user with no read access to the active Shop.
   let shopTitle = SHOPS.find((s) => s.id === domain.activeOrgId)?.fallback ?? "Unknown Shop";
   let shopLocation: string | null = null;
   let toolPrefix = "";
@@ -182,7 +187,6 @@ export function AppShellNav({ activeView, activeSection, onSelectView, onSelectS
               key={item.key}
               icon={item.icon}
               label={item.label}
-              count={item.count}
               active={activeSection === item.key}
               onClick={() => onSelectSection(item.key)}
             />
@@ -240,11 +244,10 @@ function NavItem({
       type="button"
       onClick={onClick}
       className={clsx(
-        "relative flex w-full items-center justify-between gap-2.5 rounded-md px-3 py-2 text-xs font-medium transition",
+        "flex w-full items-center justify-between gap-2.5 rounded-md px-3 py-2 text-xs font-medium transition",
         active ? "bg-[#1f242f] text-white" : "text-white/75 hover:bg-[#1f242f]/60 hover:text-white",
       )}
     >
-      {active && <span className="absolute bottom-1.5 left-0 top-1.5 w-[3px] rounded-r bg-[#155eef]" />}
       <span className="flex items-center gap-2.5">
         <Icon className={clsx("h-4 w-4 shrink-0", active ? "text-[#155eef]" : "text-white/65")} />
         <span>{label}</span>

@@ -121,20 +121,17 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
   const [actionFilter, setActionFilter] = useState<ActionFilter>("ALL");
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
 
   let entries: AuditLogEntry[] = [];
   let accessError: string | null = null;
   let shopName = "This Shop";
   let shopShort = "This Shop";
   let timezone = "America/Los_Angeles";
-  let idleMinutes = 30;
   try {
     const org = domain.store.getOrganization(domain.principal, domain.activeOrgId);
     shopName = org.name;
     shopShort = shortShopName(org.name);
     timezone = org.timezone;
-    idleMinutes = org.idle_timeout_minutes;
   } catch {
     // fall through; getAuditLog below will surface the precise access error
   }
@@ -142,9 +139,9 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
     entries = domain.store.getAuditLog(domain.principal, domain.activeOrgId);
   } catch (err) {
     if (err instanceof CrossTenantNotFoundError) {
-      accessError = "This persona is not an active Member of the selected Shop, so the compliance audit log is not visible.";
+      accessError = "You are not an active Member of the selected Shop, so the compliance audit log is not visible.";
     } else if (err instanceof NotAuthorizedError) {
-      accessError = "Only Admin and Inspector roles can read the compliance audit log. Switch persona in the Tweaks pill to view it.";
+      accessError = "Only Admin and Inspector roles can read the compliance audit log.";
     } else {
       throw err;
     }
@@ -191,13 +188,6 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
       search={search}
       onSearch={setSearch}
       searchPlaceholder="Search actor, reason, or area…"
-      idleLabel={`Idle Timeout (${idleMinutes}m)`}
-      onPreviewIdle={chrome.onPreviewIdle}
-      primary={{
-        label: "Verify Integrity",
-        onClick: () => setMessage(`Verified ${entries.length} of ${entries.length} entries — the append-only history is intact and unaltered.`),
-        disabled: entries.length === 0,
-      }}
     />
   );
 
@@ -234,8 +224,7 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
           <>
           <ListColumnHeader
             title="Compliance Audit Register"
-            metric={`${entries.length} of ${entries.length} verified (100%)`}
-            progressPct={100}
+            metric={`${entries.length} ${entries.length === 1 ? "entry" : "entries"}`}
             tabs={[
               { key: "all", label: `All (${counts.all})` },
               { key: "org_memberships", label: `Team (${counts.team})` },
@@ -312,17 +301,13 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
                     },
                     {
                       label: `Recorded (${timezone})`,
-                      value: <span className="font-mono text-xs tabular-nums">{formatInTimeZone(selected.created_at, timezone)}</span>,
+                      value: <span className="text-xs tabular-nums">{formatInTimeZone(selected.created_at, timezone)}</span>,
                     },
                   ]}
                 />
               </div>
 
               <div className="max-w-3xl flex-1 space-y-5 px-7 py-5">
-                {message && (
-                  <div className="rounded-lg bg-[#ecfdf3] px-3.5 py-2.5 text-sm text-[#067647] ring-1 ring-inset ring-[#abefc6]">{message}</div>
-                )}
-
                 <div>
                   <p className="mb-2 text-sm font-medium text-[#344054]">What changed</p>
                   <ChangeTable entry={selected} />
@@ -338,11 +323,10 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
                 <div className="rounded-lg border border-[#eaecf0] bg-white p-4 shadow-xs">
                   <p className="inline-flex items-center gap-1.5 text-sm font-medium text-[#101828]">
                     <ShieldCheck className="h-4 w-4 text-[#17b26a]" />
-                    Tamper-evident record
+                    Append-only record
                   </p>
                   <p className="mt-1 text-xs text-[#667085]">
-                    Every compliance change is appended to a permanent history. Entries can never be edited or deleted once written —
-                    not even by a Shop Admin — so the record always reflects exactly what happened.
+                    Append-only. Entries can&apos;t be edited or deleted once written — not even by a Shop Admin.
                   </p>
                 </div>
               </div>
@@ -356,20 +340,7 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
                   </>
                 }
               >
-                <button
-                  type="button"
-                  onClick={() => setMessage(`Entry AUD-${shortId(selected.id)} verified — unchanged since it was recorded.`)}
-                  className="uui-btn-secondary h-9 rounded-md px-3 text-xs font-medium"
-                >
-                  Verify this entry
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMessage(`Verified ${entries.length} of ${entries.length} entries — the append-only history is intact and unaltered.`)}
-                  className="uui-btn-primary h-9 rounded-md px-3.5 text-xs font-medium"
-                >
-                  Verify integrity
-                </button>
+                <span className="text-[11px] text-gray-400">Append-only — entries can&apos;t be edited or deleted.</span>
               </DetailFooter>
             </>
           )}

@@ -37,6 +37,18 @@ const ROLE_CYCLE: Array<Role | "ALL"> = ["ALL", "admin", "inspector", "mechanic"
 const DESIGNATION_CYCLE = ["ALL", "cal", "auditor"] as const;
 type Designation = (typeof DESIGNATION_CYCLE)[number];
 
+/** Map domain errors to plain, product-facing copy — never surface raw codes like "LAST_ADMIN_GUARD:". */
+function humanError(err: unknown): string {
+  if (err instanceof LastAdminGuardError) {
+    return "This Shop must always have at least one active Admin. Promote or add another Admin before changing this one.";
+  }
+  if (err instanceof NotAuthorizedError) {
+    return "You don't have permission to do that in this Shop.";
+  }
+  if (err instanceof Error) return err.message.replace(/^[A-Z_]+:\s*/, "");
+  return "Something went wrong.";
+}
+
 function statusPillFor(status: OrgMembership["status"]): { label: string; color: StatusDotColor } {
   if (status === "active") return { label: "Active", color: "green" };
   if (status === "invited") return { label: "Invited", color: "blue" };
@@ -88,12 +100,10 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
   let accessDenied = false;
   let shopName = "This Shop";
   let shopShort = "This Shop";
-  let idleMinutes = 30;
   try {
     const org = domain.store.getOrganization(domain.principal, domain.activeOrgId);
     shopName = org.name;
     shopShort = shortShopName(org.name);
-    idleMinutes = org.idle_timeout_minutes;
     members = domain.store.listMembers(domain.principal, domain.activeOrgId);
   } catch (err) {
     if (err instanceof CrossTenantNotFoundError) accessDenied = true;
@@ -152,9 +162,7 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
       fn();
       setMessage(successText ? { kind: "success", text: successText } : null);
     } catch (err) {
-      if (err instanceof LastAdminGuardError || err instanceof NotAuthorizedError || err instanceof Error) {
-        setMessage({ kind: "error", text: err.message });
-      }
+      setMessage({ kind: "error", text: humanError(err) });
     }
   };
 
@@ -188,8 +196,6 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
       search={search}
       onSearch={setSearch}
       searchPlaceholder="Search members by name or email…"
-      idleLabel={`Idle Timeout (${idleMinutes}m)`}
-      onPreviewIdle={chrome.onPreviewIdle}
       primary={{
         label: "+ Invite Member",
         onClick: () => {
@@ -205,7 +211,7 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
     return (
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {header}
-        <AccessDeniedPanel message="This persona is not an active Member of the selected Shop, so Team & Roles data is not visible. Each Shop's roster stays fully isolated from every other Shop." />
+        <AccessDeniedPanel message="You are not an active Member of the selected Shop, so Team & Roles data is not visible. Each Shop's roster stays fully isolated from every other Shop." />
       </div>
     );
   }
@@ -579,7 +585,7 @@ function MemberActivityPanel({ memberId }: { memberId: string }) {
       {entries.map((entry) => (
         <li key={entry.id} className="rounded-lg bg-white p-3 shadow-xs ring-1 ring-inset ring-[#e4e7ec]">
           <div className="flex items-center justify-between">
-            <span className="font-mono text-xs tabular-nums text-[#667085]">{entry.created_at}</span>
+            <span className="text-xs tabular-nums text-[#667085]">{entry.created_at}</span>
             <StatusPill
               label={entry.action === "INSERT" ? "Added to roster" : "Role updated"}
               color={entry.action === "INSERT" ? "blue" : "purple"}
@@ -628,7 +634,7 @@ function InviteMemberForm({
         )}
         {!canManage && (
           <div className="rounded-lg bg-[#fffaeb] px-3.5 py-2.5 text-sm text-[#93370d] ring-1 ring-inset ring-[#fedf89]">
-            Only an active Admin can invite members. Switch to the Admin persona in the Tweaks pill to send invitations.
+            Only an active Admin can invite members.
           </div>
         )}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
