@@ -98,17 +98,13 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
   const isPlatformOwner = domain.principal.isPlatformOwner === true;
 
   const [form, setForm] = useState<SettingsFormState | null>(org ? emptySettingsForm(org) : null);
-  // Re-sync the form from the store on any data change (including our own save).
+  // Re-sync the form from the store on any data change (including our own save),
+  // but leave `message` alone so the success banner our save sets survives the
+  // version bump (the member-save banner in Team & Roles survives the same way).
   useEffect(() => {
     setForm(org ? emptySettingsForm(org) : null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [domain.activeOrgId, domain.version]);
-  // Clear the save banner only when the Shop changes — NOT on every data
-  // version bump, or the success banner our own save sets would be wiped out
-  // immediately (the member-save banner in Team & Roles survives the same way).
-  useEffect(() => {
-    setMessage(null);
-  }, [domain.activeOrgId]);
 
   const canConfigure = org ? domain.store.canConfigureShopSettings(domain.principal, domain.activeOrgId) : false;
 
@@ -124,6 +120,32 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
     selected.key,
     (key) => setSection(key as SectionKey),
   );
+
+  // Changing section (or Shop) is a fresh context: clear any banner and reset
+  // the draft + reason so a message or a bad value from one section never
+  // bleeds into another (a read-only section must show no save banner, and a
+  // bad value here must never block Save or show an error on a field off-screen).
+  useEffect(() => {
+    setMessage(null);
+    setForm(org ? emptySettingsForm(org) : null);
+    setReason("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [domain.activeOrgId, selected.key]);
+
+  // Whether the draft differs from the saved Shop — Save stays disabled (and a
+  // no-op save is skipped) until something in the editable form actually changes.
+  const formDirty =
+    !!org &&
+    !!form &&
+    (form.timezone !== org.timezone ||
+      form.toolIdPrefix !== org.tool_id_prefix ||
+      form.dueSoonDays !== org.due_soon_days ||
+      form.weeklyDigestDay !== org.weekly_digest_day ||
+      form.weeklyDigestHour !== org.weekly_digest_hour ||
+      form.weeklyDigestMinute !== org.weekly_digest_minute ||
+      form.missingToolThresholdDays !== org.missing_tool_threshold_days ||
+      form.staleAircraftDays !== org.stale_aircraft_days ||
+      form.idleTimeoutMinutes !== org.idle_timeout_minutes);
 
   const handleSave = () => {
     if (!org || !form) return;
@@ -258,7 +280,7 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
           </div>
 
           <div className="max-w-3xl flex-1 space-y-5 px-7 py-5">
-            {message && (
+            {message && (selected.key === "thresholds" || selected.key === "digest") && (
               <div
                 className={clsx(
                   "rounded-lg px-3.5 py-2.5 text-sm ring-1 ring-inset",
@@ -300,7 +322,7 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
           >
             <button
               type="button"
-              disabled={!canConfigure || selected.key === "provisioning" || selected.key === "rls"}
+              disabled={!canConfigure || selected.key === "provisioning" || selected.key === "rls" || !formDirty}
               onClick={handleSave}
               className="uui-btn-primary h-9 rounded-md px-3.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -396,8 +418,8 @@ function ShopSettingsForm({
                     </option>
                   ))}
                 </select>
-                <NumberInput value={form.weeklyDigestHour} disabled={!canConfigure} min={0} max={23} onChange={(v) => setForm((p) => ({ ...p, weeklyDigestHour: v }))} className="w-20" />
-                <NumberInput value={form.weeklyDigestMinute} disabled={!canConfigure} min={0} max={59} onChange={(v) => setForm((p) => ({ ...p, weeklyDigestMinute: v }))} className="w-20" />
+                <NumberInput ariaLabel="Weekly digest hour (0–23)" value={form.weeklyDigestHour} disabled={!canConfigure} min={0} max={23} onChange={(v) => setForm((p) => ({ ...p, weeklyDigestHour: v }))} className="w-20" />
+                <NumberInput ariaLabel="Weekly digest minute (0–59)" value={form.weeklyDigestMinute} disabled={!canConfigure} min={0} max={59} onChange={(v) => setForm((p) => ({ ...p, weeklyDigestMinute: v }))} className="w-20" />
               </div>
             )}
           </Field>
@@ -428,10 +450,10 @@ function ShopSettingsForm({
 
 function ProvisioningPanel({ isPlatformOwner }: { isPlatformOwner: boolean }) {
   const domain = useDomain();
-  const [shopName, setShopName] = useState("Pacific Rotorcraft Maintenance");
-  const [slug, setSlug] = useState("org-pacific-rotorcraft");
-  const [adminEmail, setAdminEmail] = useState("admin@pacificrotorcraft.example");
-  const [adminFullName, setAdminFullName] = useState("Priya Nakamura");
+  const [shopName, setShopName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminFullName, setAdminFullName] = useState("");
   const [receipt, setReceipt] = useState<ProvisionShopReceipt | null>(null);
   const [verifyResult, setVerifyResult] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -476,22 +498,22 @@ function ProvisioningPanel({ isPlatformOwner }: { isPlatformOwner: boolean }) {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Shop name">
-          {(id) => <TextInput id={id} value={shopName} disabled={!isPlatformOwner} onChange={setShopName} />}
+          {(id) => <TextInput id={id} value={shopName} disabled={!isPlatformOwner} onChange={setShopName} placeholder="New Shop name" />}
         </Field>
         <Field label="Shop reference">
-          {(id) => <TextInput id={id} value={slug} disabled={!isPlatformOwner} onChange={setSlug} mono />}
+          {(id) => <TextInput id={id} value={slug} disabled={!isPlatformOwner} onChange={setSlug} mono placeholder="org-reference" />}
         </Field>
         <Field label="Initial Admin full name">
-          {(id) => <TextInput id={id} value={adminFullName} disabled={!isPlatformOwner} onChange={setAdminFullName} />}
+          {(id) => <TextInput id={id} value={adminFullName} disabled={!isPlatformOwner} onChange={setAdminFullName} placeholder="Full name" />}
         </Field>
         <Field label="Initial Admin email">
-          {(id) => <TextInput id={id} value={adminEmail} disabled={!isPlatformOwner} onChange={setAdminEmail} type="email" />}
+          {(id) => <TextInput id={id} value={adminEmail} disabled={!isPlatformOwner} onChange={setAdminEmail} type="email" placeholder="name@shop.example" />}
         </Field>
       </div>
 
       <button
         type="button"
-        disabled={!isPlatformOwner}
+        disabled={!isPlatformOwner || !shopName.trim() || !slug.trim() || !adminFullName.trim() || !adminEmail.trim()}
         onClick={handleProvision}
         className="uui-btn-primary rounded-lg px-3.5 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
       >
@@ -569,6 +591,7 @@ function NumberInput({
   min,
   max,
   className,
+  ariaLabel,
 }: {
   id?: string;
   value: number;
@@ -577,11 +600,13 @@ function NumberInput({
   min?: number;
   max?: number;
   className?: string;
+  ariaLabel?: string;
 }) {
   return (
     <input
       id={id}
       type="number"
+      aria-label={ariaLabel}
       value={value}
       min={min}
       max={max}
@@ -602,6 +627,7 @@ function TextInput({
   disabled,
   type = "text",
   mono,
+  placeholder,
 }: {
   id?: string;
   value: string;
@@ -609,6 +635,7 @@ function TextInput({
   disabled?: boolean;
   type?: string;
   mono?: boolean;
+  placeholder?: string;
 }) {
   return (
     <input
@@ -616,6 +643,7 @@ function TextInput({
       type={type}
       value={value}
       disabled={disabled}
+      placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
       className={clsx(
         "w-full rounded-lg border border-[#d0d5dd] px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef] disabled:bg-[#f9fafb]",

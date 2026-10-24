@@ -18,7 +18,7 @@ const CONTENT: Record<PreviewSection, SectionContent> = {
     title: "Dashboard",
     subtitle: "Shop overview",
     blurb:
-      "The Dashboard will roll up calibration, consumable, and audit health into a single Shop-wide view. The multi-Shop foundation and audit log beneath it are live now.",
+      "The Dashboard will roll up calibration, consumable, and audit health into a single Shop-wide view.",
     willTrack: ["Calibration status", "Consumable shelf-life", "Open work orders", "Audit activity"],
   },
   tools: {

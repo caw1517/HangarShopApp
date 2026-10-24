@@ -363,6 +363,14 @@ export class ShopFoundationStore {
     if (input.staleAircraftDays !== undefined) patch.stale_aircraft_days = input.staleAircraftDays;
     if (input.idleTimeoutMinutes !== undefined) patch.idle_timeout_minutes = input.idleTimeoutMinutes;
 
+    // Skip no-op saves: if nothing actually changed, leave updated_at alone and
+    // record no audit row (mirrors the 0003 UPDATE trigger's WHEN guard — a
+    // no-op must not add noise to the compliance log).
+    const changed = (Object.entries(patch) as Array<[keyof Organization, Organization[keyof Organization]]>).some(
+      ([key, value]) => org[key] !== value,
+    );
+    if (!changed) return deepFreezeClone(org);
+
     Object.assign(org, patch, { updated_at: this.now() });
 
     this.appendAuditLog(

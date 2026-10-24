@@ -185,11 +185,13 @@ $$;
 -- back to its own id) and `org_memberships`, and so DELETE (where NEW is NULL)
 -- is handled without referencing missing record fields.
 --
--- Trust model: only actor_user_id (auth.uid()) and the signed JWT claims
--- (email / full_name) are trusted. The reason column is NOT populated from any
--- client-settable session GUC here -- it is intentionally left NULL for
--- trigger-captured rows and is only set by trusted application/provisioning
--- writes (see provision_shop and the domain service layer).
+-- Trust model: only actor_user_id (auth.uid()) and the signed JWT email are
+-- trusted; in the active definition actor_name is resolved from trusted sources
+-- only (see 0002). The reason column is populated from a transaction-local GUC
+-- (hangar.audit_reason) set by the SECURITY INVOKER write RPCs in 0003 -- it is
+-- never taken from an actor-settable field. NOTE: this function is REPLACED by
+-- 0002 and again by 0003; the body below is the original 0001 version and is
+-- superseded at runtime by the later definition.
 CREATE OR REPLACE FUNCTION record_audit_log()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -348,12 +350,15 @@ AS $$
   );
 $$;
 
--- Authorization for provision_shop. Two accepted callers:
+-- Authorization for provision_shop. The in-function gate accepts two callers:
 --   1. The service role (server-side calls made with the service-role key, the
 --      primary and intended path -- never exposed to the browser).
 --   2. A registered platform owner (a row in platform_owners keyed by auth.uid).
--- Everyone else is rejected. Kept SECURITY DEFINER so it can read platform_owners
--- under FORCE RLS.
+-- Branch 2 is reserved for a future signed-in Platform Owner path: today NO role
+-- grant lets anon or authenticated EXECUTE provision_shop (see the grants below),
+-- so in practice only the service-role branch is reachable and the
+-- platform_owners table is unused at runtime. Everyone else is rejected. Kept
+-- SECURITY DEFINER so it can read platform_owners under FORCE RLS.
 CREATE OR REPLACE FUNCTION is_platform_owner()
 RETURNS boolean
 LANGUAGE plpgsql
@@ -493,8 +498,8 @@ CREATE POLICY audit_log_select ON audit_log
 
 -- =========================================================================
 -- Storage policies: shop-documents bucket (ADR-0001)
--- Note: the shop-documents bucket itself must be created separately (e.g.
--- via the Supabase dashboard/API), not in this SQL migration.
+-- Note: the private shop-documents bucket itself is created in migration 0002
+-- (INSERT INTO storage.buckets), not in this file.
 -- Read/upload: any active Shop member. Overwrite/delete: Admin or Inspector
 -- only, so a mechanic cannot destroy or replace a Shop's compliance documents.
 -- =========================================================================

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SlidersHorizontal } from "@/components/primitives/icons";
 import { useDomain } from "@/lib/domain/context";
@@ -18,6 +18,8 @@ export function TweaksPill() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const shopSelectId = useId();
+  const roleSelectId = useId();
 
   const pushParam = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -62,8 +64,9 @@ export function TweaksPill() {
 
       <div className="mt-3 space-y-3">
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-white/55">Shop</label>
+          <label htmlFor={shopSelectId} className="mb-1 block text-[11px] font-medium text-white/55">Shop</label>
           <select
+            id={shopSelectId}
             value={domain.activeOrgId}
             onChange={(e) => handleShopChange(e.target.value)}
             className="w-full appearance-none rounded-md border border-white/10 bg-[#161b26] px-2.5 py-1.5 text-xs font-medium text-white focus:outline-none focus:ring-2 focus:ring-[#155eef]"
@@ -77,8 +80,9 @@ export function TweaksPill() {
         </div>
 
         <div>
-          <label className="mb-1 block text-[11px] font-medium text-white/55">Role</label>
+          <label htmlFor={roleSelectId} className="mb-1 block text-[11px] font-medium text-white/55">Role</label>
           <select
+            id={roleSelectId}
             value={domain.personaKey}
             onChange={(e) => handlePersonaChange(e.target.value as PersonaKey)}
             className="w-full appearance-none rounded-md border border-white/10 bg-[#161b26] px-2.5 py-1.5 text-xs font-medium text-white focus:outline-none focus:ring-2 focus:ring-[#155eef]"

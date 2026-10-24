@@ -257,6 +257,25 @@ describe("Per-Shop settings defaults", () => {
     expect(entry?.before_data).toMatchObject({ idle_timeout_minutes: 30 });
     expect(entry?.after_data).toMatchObject({ idle_timeout_minutes: 45 });
   });
+
+  it("does not record an audit entry (or touch updated_at) for a no-op settings save", () => {
+    const before = store.getOrganization(elena, ORG_APEX_ID);
+    const beforeLogCount = store.getAuditLog(elena, ORG_APEX_ID).length;
+    // Save the exact current values — nothing changes.
+    const result = store.updateOrgSettings(
+      elena,
+      ORG_APEX_ID,
+      {
+        dueSoonDays: before.due_soon_days,
+        idleTimeoutMinutes: before.idle_timeout_minutes,
+        timezone: before.timezone,
+        toolIdPrefix: before.tool_id_prefix,
+      },
+      "No real change",
+    );
+    expect(result.updated_at).toBe(before.updated_at); // updated_at untouched
+    expect(store.getAuditLog(elena, ORG_APEX_ID).length).toBe(beforeLogCount); // no new audit row
+  });
 });
 
 describe("Settings validation bounds & time zone (PR #38 round-2 follow-ups)", () => {

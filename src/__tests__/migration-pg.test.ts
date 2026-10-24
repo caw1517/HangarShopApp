@@ -723,3 +723,199 @@ describe("Shop time zone validation (0002, finding 10c)", () => {
     await expect(acting(db, SERVICE, () => db.query(bad))).rejects.toThrow(/INVALID_TIMEZONE/);
   });
 });
+
+/* ======================================================================== */
+/* 0003 follow-ups                                                          */
+/* ======================================================================== */
+
+describe("Signed-out (anon) reads return nothing, never a function error (0003, finding 1)", () => {
+  beforeEach(async () => {
+    await seedTwoShops(db);
+  });
+
+  it("denies anon SELECT on the tenant tables with a clean TABLE-permission error (not a function error)", async () => {
+    for (const tbl of ["organizations", "org_memberships", "audit_log"]) {
+      await expect(acting(db, { role: "anon" }, () => db.query(`SELECT * FROM ${tbl}`))).rejects.toThrow(
+        new RegExp(`permission denied for table ${tbl}`, "i"),
+      );
+    }
+  });
+
+  it("lets anon SELECT storage.objects for ANY bucket and get zero rows, with no helper-function error", async () => {
+    // Seeded as superuser (bypasses RLS): one object in shop-documents, one in a
+    // different (hypothetical future public) bucket. Before 0003 the shop_documents
+    // policies applied to all roles, so an anon read of either raised
+    // "permission denied for function is_active_org_member".
+    await db.exec(`INSERT INTO storage.objects (bucket_id, name) VALUES ('shop-documents', '${ORG_A}/certs/cal.pdf')`);
+    await db.exec(`INSERT INTO storage.objects (bucket_id, name) VALUES ('public-logos', 'brand/logo.png')`);
+
+    const docs = await acting(db, { role: "anon" }, () => rows(`SELECT name FROM storage.objects WHERE bucket_id='shop-documents'`));
+    expect(docs).toHaveLength(0);
+    const other = await acting(db, { role: "anon" }, () => rows(`SELECT name FROM storage.objects WHERE bucket_id='public-logos'`));
+    expect(other).toHaveLength(0);
+  });
+
+  it("still lets an authenticated member read their own Shop under the authenticated-scoped policies", async () => {
+    const orgs = await acting(db, adminA, () => rows(`SELECT id FROM organizations`));
+    expect(orgs.map((o) => o.id)).toEqual([ORG_A]);
+    const mem = await acting(db, adminA, () => rows(`SELECT org_id FROM org_memberships`));
+    expect(mem.length).toBeGreaterThan(0);
+    expect(mem.every((m) => m.org_id === ORG_A)).toBe(true);
+  });
+
+  it("strips TRUNCATE / TRIGGER / REFERENCES from authenticated and service_role on the app tables", async () => {
+    for (const tbl of ["organizations", "org_memberships", "audit_log"]) {
+      for (const role of ["authenticated", "service_role"]) {
+        const r = await one(
+          `SELECT has_table_privilege('${role}', '${tbl}', 'TRUNCATE') AS trunc,
+                  has_table_privilege('${role}', '${tbl}', 'TRIGGER') AS trig,
+                  has_table_privilege('${role}', '${tbl}', 'REFERENCES') AS ref`,
+        );
+        expect(r.trunc, `${role} TRUNCATE on ${tbl}`).toBe(false);
+        expect(r.trig, `${role} TRIGGER on ${tbl}`).toBe(false);
+        expect(r.ref, `${role} REFERENCES on ${tbl}`).toBe(false);
+      }
+    }
+  });
+});
+
+describe("Audit reason write path & no-op UPDATE skip (0003, findings 2 & 8)", () => {
+  beforeEach(async () => {
+    await seedTwoShops(db);
+  });
+
+  it("stores a reason passed through update_org_settings, with the trusted actor", async () => {
+    await acting(db, adminA, () =>
+      db.query(`SELECT update_org_settings('${ORG_A}','America/New_York','TL',90,1,6,0,30,30,30,'Aligning with insurer')`),
+    );
+    const audit = await one(
+      `SELECT reason, actor_user_id, actor_email, actor_name FROM audit_log
+       WHERE table_name='organizations' AND action='UPDATE' AND org_id='${ORG_A}' ORDER BY created_at DESC LIMIT 1`,
+    );
+    expect(audit.reason).toBe("Aligning with insurer");
+    expect(audit.actor_user_id).toBe(A_ADMIN_USER);
+    expect(audit.actor_email).toBe("admin.a@apexchartermx.example");
+    expect(audit.actor_name).toBe("Admin A");
+  });
+
+  it("stores a reason passed through update_member_role_designations", async () => {
+    await acting(db, adminA, () =>
+      db.query(`SELECT update_member_role_designations('${A_MECH_MEMBER}','inspector',false,false,'Cross-trained on inspections')`),
+    );
+    const audit = await one(
+      `SELECT reason, after_data->>'role' AS role FROM audit_log
+       WHERE table_name='org_memberships' AND action='UPDATE' AND record_id='${A_MECH_MEMBER}' ORDER BY created_at DESC LIMIT 1`,
+    );
+    expect(audit.reason).toBe("Cross-trained on inspections");
+    expect(audit.role).toBe("inspector");
+  });
+
+  it("stores a reason passed through deactivate_member", async () => {
+    await acting(db, adminA, () => db.query(`SELECT deactivate_member('${A_MECH_MEMBER}','Left the company')`));
+    const audit = await one(
+      `SELECT reason, after_data->>'status' AS status FROM audit_log
+       WHERE table_name='org_memberships' AND action='UPDATE' AND record_id='${A_MECH_MEMBER}' ORDER BY created_at DESC LIMIT 1`,
+    );
+    expect(audit.reason).toBe("Left the company");
+    expect(audit.status).toBe("deactivated");
+  });
+
+  it("deactivate_member requires a non-empty reason", async () => {
+    await expect(acting(db, adminA, () => db.query(`SELECT deactivate_member('${A_MECH_MEMBER}','   ')`))).rejects.toThrow(
+      /REASON_REQUIRED/,
+    );
+  });
+
+  it("reads a reason set via set_config in the SAME transaction, but never leaks it to a later one", async () => {
+    // Same transaction: the reason reaches the capture trigger.
+    await acting(db, adminA, () =>
+      db.exec(`
+        BEGIN;
+        SELECT set_config('hangar.audit_reason', 'Same-txn reason', true);
+        UPDATE organizations SET due_soon_days = 55 WHERE id = '${ORG_A}';
+        COMMIT;
+      `),
+    );
+    const sameTxn = await one(
+      `SELECT reason FROM audit_log WHERE table_name='organizations' AND action='UPDATE'
+       AND after_data->>'due_soon_days'='55' ORDER BY created_at DESC LIMIT 1`,
+    );
+    expect(sameTxn.reason).toBe("Same-txn reason");
+
+    // Different transaction: set_config(..., is_local := true) in one autocommit
+    // statement does not survive into the next statement's transaction.
+    await acting(db, adminA, async () => {
+      await db.query(`SELECT set_config('hangar.audit_reason', 'Should not leak', true)`);
+      await db.query(`UPDATE organizations SET due_soon_days = 66 WHERE id = '${ORG_A}'`);
+    });
+    const laterTxn = await one(
+      `SELECT reason FROM audit_log WHERE table_name='organizations' AND action='UPDATE'
+       AND after_data->>'due_soon_days'='66' ORDER BY created_at DESC LIMIT 1`,
+    );
+    expect(laterTxn.reason).toBeNull();
+  });
+
+  it("resolves the actor from the JWT only — a hangar.* setting cannot forge it", async () => {
+    await acting(db, adminA, () =>
+      db.exec(`
+        BEGIN;
+        SELECT set_config('hangar.actor_email', 'attacker@evil.example', true);
+        SELECT set_config('hangar.audit_reason', 'Legit reason', true);
+        UPDATE org_memberships SET role='inspector' WHERE id='${A_MECH_MEMBER}';
+        COMMIT;
+      `),
+    );
+    const audit = await one(
+      `SELECT actor_email, actor_user_id, reason FROM audit_log
+       WHERE table_name='org_memberships' AND action='UPDATE' AND record_id='${A_MECH_MEMBER}' ORDER BY created_at DESC LIMIT 1`,
+    );
+    expect(audit.actor_email).toBe("admin.a@apexchartermx.example");
+    expect(audit.actor_user_id).toBe(A_ADMIN_USER);
+    expect(audit.reason).toBe("Legit reason");
+  });
+
+  it("still blocks a cross-Shop write through the invoker RPC (RLS applies as the caller)", async () => {
+    await expect(
+      acting(db, adminB, () =>
+        db.query(`SELECT update_org_settings('${ORG_A}','America/New_York','TL',90,1,6,0,30,30,30,'nope')`),
+      ),
+    ).rejects.toThrow(/ORG_NOT_FOUND|no organization/i);
+    const org = await one(`SELECT timezone FROM organizations WHERE id='${ORG_A}'`);
+    expect(org.timezone).toBe("America/Los_Angeles"); // unchanged
+  });
+
+  it("records NO audit row for a no-op UPDATE (WHEN OLD.* IS DISTINCT FROM NEW.*)", async () => {
+    const before = await one(`SELECT count(*)::int AS n FROM audit_log WHERE org_id='${ORG_A}'`);
+    // Owner context (bypasses RLS) isolates the trigger WHEN guard; the value is
+    // set to itself so the row is unchanged and updated_at is not touched.
+    const res = await db.query(`UPDATE organizations SET due_soon_days = due_soon_days WHERE id='${ORG_A}'`);
+    expect(res.affectedRows).toBe(1); // the row was visited...
+    const after = await one(`SELECT count(*)::int AS n FROM audit_log WHERE org_id='${ORG_A}'`);
+    expect(after.n).toBe(before.n); // ...but nothing changed, so no audit row
+  });
+
+  it("still records an audit row for a real UPDATE", async () => {
+    const before = await one(`SELECT count(*)::int AS n FROM audit_log WHERE org_id='${ORG_A}'`);
+    await db.exec(`UPDATE organizations SET due_soon_days = 123 WHERE id='${ORG_A}'`);
+    const after = await one(`SELECT count(*)::int AS n FROM audit_log WHERE org_id='${ORG_A}'`);
+    expect(after.n).toBe((before.n as number) + 1);
+  });
+
+  it("grants EXECUTE on the write RPCs to authenticated only (anon + service_role denied)", async () => {
+    const fns = [
+      "update_member_role_designations(uuid, text, boolean, boolean, text)",
+      "deactivate_member(uuid, text)",
+      "update_org_settings(uuid, text, text, integer, integer, integer, integer, integer, integer, integer, text)",
+    ];
+    for (const fn of fns) {
+      const r = await one(
+        `SELECT has_function_privilege('authenticated', '${fn}', 'EXECUTE') AS authed,
+                has_function_privilege('anon', '${fn}', 'EXECUTE') AS anon,
+                has_function_privilege('service_role', '${fn}', 'EXECUTE') AS svc`,
+      );
+      expect(r.authed, `authenticated EXECUTE on ${fn}`).toBe(true);
+      expect(r.anon, `anon EXECUTE on ${fn}`).toBe(false);
+      expect(r.svc, `service_role EXECUTE on ${fn}`).toBe(false);
+    }
+  });
+});

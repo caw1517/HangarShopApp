@@ -59,6 +59,8 @@ export function ContextHeaderBar({
         <div className="relative hidden w-56 md:block">
           <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-[#64748b]" />
           <input
+            type="search"
+            aria-label={searchPlaceholder}
             value={search}
             onChange={(e) => onSearch(e.target.value)}
             placeholder={searchPlaceholder}
