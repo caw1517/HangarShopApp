@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { clsx } from "clsx";
 import { useDomain } from "@/lib/domain/context";
 import { CrossTenantNotFoundError, LastAdminGuardError, NotAuthorizedError } from "@/lib/domain/errors";
@@ -85,6 +85,8 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
   const [draftAuditor, setDraftAuditor] = useState(false);
   const [reason, setReason] = useState("");
   const [deactivateReason, setDeactivateReason] = useState("");
+  const reasonId = useId();
+  const deactivateReasonId = useId();
 
   const [inviteForm, setInviteForm] = useState({
     email: "",
@@ -467,8 +469,9 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
                     </div>
 
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-[#344054]">Reason (recorded to audit log)</label>
+                      <label htmlFor={reasonId} className="mb-1 block text-sm font-medium text-[#344054]">Reason (recorded to audit log)</label>
                       <input
+                        id={reasonId}
                         type="text"
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
@@ -485,7 +488,11 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
                           Deactivating a team member revokes access immediately while preserving their historical compliance and
                           sign-off records.
                         </p>
+                        <label htmlFor={deactivateReasonId} className="sr-only">
+                          Reason for deactivation
+                        </label>
                         <input
+                          id={deactivateReasonId}
                           type="text"
                           value={deactivateReason}
                           onChange={(e) => setDeactivateReason(e.target.value)}
@@ -630,6 +637,7 @@ function InviteMemberForm({
   onCancel: () => void;
   message: { kind: "error" | "success"; text: string } | null;
 }) {
+  const roleId = useId();
   return (
     <>
       <DetailScroll>
@@ -648,8 +656,9 @@ function InviteMemberForm({
           <LabeledInput label="Email" type="email" value={form.email} onChange={(v) => setForm((p) => ({ ...p, email: v }))} />
         </div>
         <div>
-          <label className="mb-1 block text-sm font-medium text-[#344054]">Role</label>
+          <label htmlFor={roleId} className="mb-1 block text-sm font-medium text-[#344054]">Role</label>
           <select
+            id={roleId}
             value={form.role}
             onChange={(e) => setForm((p) => ({ ...p, role: e.target.value as Role }))}
             className="w-full rounded-lg border border-[#d0d5dd] bg-white px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef]"
@@ -720,10 +729,12 @@ function LabeledInput({
   type?: string;
   mono?: boolean;
 }) {
+  const id = useId();
   return (
     <div>
-      <label className="mb-1 block text-sm font-medium text-[#344054]">{label}</label>
+      <label htmlFor={id} className="mb-1 block text-sm font-medium text-[#344054]">{label}</label>
       <input
+        id={id}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}

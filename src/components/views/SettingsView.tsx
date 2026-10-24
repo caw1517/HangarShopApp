@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { clsx } from "clsx";
 import { useDomain } from "@/lib/domain/context";
 import { CrossTenantNotFoundError } from "@/lib/domain/errors";
@@ -334,73 +334,93 @@ function ShopSettingsForm({
       {section === "thresholds" ? (
         <>
           <Field label="Time zone">
-            <select
-              value={form.timezone}
-              disabled={!canConfigure}
-              onChange={(e) => setForm((prev) => ({ ...prev, timezone: e.target.value }))}
-              className="w-full rounded-lg border border-[#d0d5dd] bg-white px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef] disabled:bg-[#f9fafb]"
-            >
-              {TIMEZONES.map((tz) => (
-                <option key={tz} value={tz}>
-                  {tz}
-                </option>
-              ))}
-            </select>
+            {(id) => (
+              <select
+                id={id}
+                value={form.timezone}
+                disabled={!canConfigure}
+                onChange={(e) => setForm((prev) => ({ ...prev, timezone: e.target.value }))}
+                className="w-full rounded-lg border border-[#d0d5dd] bg-white px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef] disabled:bg-[#f9fafb]"
+              >
+                {TIMEZONES.map((tz) => (
+                  <option key={tz} value={tz}>
+                    {tz}
+                  </option>
+                ))}
+              </select>
+            )}
           </Field>
           <Field label="Tool ID prefix">
-            <input
-              type="text"
-              value={form.toolIdPrefix}
-              disabled={!canConfigure}
-              onChange={(e) => setForm((prev) => ({ ...prev, toolIdPrefix: e.target.value }))}
-              className="w-full rounded-lg border border-[#d0d5dd] px-3 py-2 font-mono text-sm tabular-nums shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef] disabled:bg-[#f9fafb]"
-            />
+            {(id) => (
+              <input
+                id={id}
+                type="text"
+                value={form.toolIdPrefix}
+                disabled={!canConfigure}
+                onChange={(e) => setForm((prev) => ({ ...prev, toolIdPrefix: e.target.value }))}
+                className="w-full rounded-lg border border-[#d0d5dd] px-3 py-2 font-mono text-sm tabular-nums shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef] disabled:bg-[#f9fafb]"
+              />
+            )}
           </Field>
           <Field label="Calibration due-soon window (days)">
-            <NumberInput value={form.dueSoonDays} disabled={!canConfigure} min={1} max={365} onChange={(v) => setForm((p) => ({ ...p, dueSoonDays: v }))} />
+            {(id) => (
+              <NumberInput id={id} value={form.dueSoonDays} disabled={!canConfigure} min={1} max={365} onChange={(v) => setForm((p) => ({ ...p, dueSoonDays: v }))} />
+            )}
           </Field>
           <Field label="Missing-tool alert threshold (days)">
-            <NumberInput value={form.missingToolThresholdDays} disabled={!canConfigure} min={1} max={3650} onChange={(v) => setForm((p) => ({ ...p, missingToolThresholdDays: v }))} />
+            {(id) => (
+              <NumberInput id={id} value={form.missingToolThresholdDays} disabled={!canConfigure} min={1} max={3650} onChange={(v) => setForm((p) => ({ ...p, missingToolThresholdDays: v }))} />
+            )}
           </Field>
           <Field label="Stale aircraft time threshold (days)">
-            <NumberInput value={form.staleAircraftDays} disabled={!canConfigure} min={1} max={3650} onChange={(v) => setForm((p) => ({ ...p, staleAircraftDays: v }))} />
+            {(id) => (
+              <NumberInput id={id} value={form.staleAircraftDays} disabled={!canConfigure} min={1} max={3650} onChange={(v) => setForm((p) => ({ ...p, staleAircraftDays: v }))} />
+            )}
           </Field>
         </>
       ) : (
         <>
           <Field label="Weekly digest schedule (Shop-local time)">
-            <div className="flex gap-2">
-              <select
-                value={form.weeklyDigestDay}
-                disabled={!canConfigure}
-                onChange={(e) => setForm((prev) => ({ ...prev, weeklyDigestDay: Number(e.target.value) }))}
-                className="flex-1 rounded-lg border border-[#d0d5dd] bg-white px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef] disabled:bg-[#f9fafb]"
-              >
-                {WEEKDAYS.map((day, idx) => (
-                  <option key={day} value={idx}>
-                    {day}
-                  </option>
-                ))}
-              </select>
-              <NumberInput value={form.weeklyDigestHour} disabled={!canConfigure} min={0} max={23} onChange={(v) => setForm((p) => ({ ...p, weeklyDigestHour: v }))} className="w-20" />
-              <NumberInput value={form.weeklyDigestMinute} disabled={!canConfigure} min={0} max={59} onChange={(v) => setForm((p) => ({ ...p, weeklyDigestMinute: v }))} className="w-20" />
-            </div>
+            {(id) => (
+              <div className="flex gap-2">
+                <select
+                  id={id}
+                  value={form.weeklyDigestDay}
+                  disabled={!canConfigure}
+                  onChange={(e) => setForm((prev) => ({ ...prev, weeklyDigestDay: Number(e.target.value) }))}
+                  className="flex-1 rounded-lg border border-[#d0d5dd] bg-white px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef] disabled:bg-[#f9fafb]"
+                >
+                  {WEEKDAYS.map((day, idx) => (
+                    <option key={day} value={idx}>
+                      {day}
+                    </option>
+                  ))}
+                </select>
+                <NumberInput value={form.weeklyDigestHour} disabled={!canConfigure} min={0} max={23} onChange={(v) => setForm((p) => ({ ...p, weeklyDigestHour: v }))} className="w-20" />
+                <NumberInput value={form.weeklyDigestMinute} disabled={!canConfigure} min={0} max={59} onChange={(v) => setForm((p) => ({ ...p, weeklyDigestMinute: v }))} className="w-20" />
+              </div>
+            )}
           </Field>
           <Field label="Idle session sign-out timeout (minutes)">
-            <NumberInput value={form.idleTimeoutMinutes} disabled={!canConfigure} min={5} max={480} onChange={(v) => setForm((p) => ({ ...p, idleTimeoutMinutes: v }))} className="w-28" />
+            {(id) => (
+              <NumberInput id={id} value={form.idleTimeoutMinutes} disabled={!canConfigure} min={5} max={480} onChange={(v) => setForm((p) => ({ ...p, idleTimeoutMinutes: v }))} className="w-28" />
+            )}
           </Field>
         </>
       )}
 
       <Field label="Reason (recorded to audit log)">
-        <input
-          type="text"
-          value={reason}
-          disabled={!canConfigure}
-          onChange={(e) => setReason(e.target.value)}
-          placeholder="e.g. Aligning due-soon window with insurer requirement"
-          className="w-full rounded-lg border border-[#d0d5dd] px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef] disabled:bg-[#f9fafb]"
-        />
+        {(id) => (
+          <input
+            id={id}
+            type="text"
+            value={reason}
+            disabled={!canConfigure}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g. Aligning due-soon window with insurer requirement"
+            className="w-full rounded-lg border border-[#d0d5dd] px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef] disabled:bg-[#f9fafb]"
+          />
+        )}
       </Field>
     </div>
   );
@@ -456,16 +476,16 @@ function ProvisioningPanel({ isPlatformOwner }: { isPlatformOwner: boolean }) {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Shop name">
-          <TextInput value={shopName} disabled={!isPlatformOwner} onChange={setShopName} />
+          {(id) => <TextInput id={id} value={shopName} disabled={!isPlatformOwner} onChange={setShopName} />}
         </Field>
         <Field label="Shop reference">
-          <TextInput value={slug} disabled={!isPlatformOwner} onChange={setSlug} mono />
+          {(id) => <TextInput id={id} value={slug} disabled={!isPlatformOwner} onChange={setSlug} mono />}
         </Field>
         <Field label="Initial Admin full name">
-          <TextInput value={adminFullName} disabled={!isPlatformOwner} onChange={setAdminFullName} />
+          {(id) => <TextInput id={id} value={adminFullName} disabled={!isPlatformOwner} onChange={setAdminFullName} />}
         </Field>
         <Field label="Initial Admin email">
-          <TextInput value={adminEmail} disabled={!isPlatformOwner} onChange={setAdminEmail} type="email" />
+          {(id) => <TextInput id={id} value={adminEmail} disabled={!isPlatformOwner} onChange={setAdminEmail} type="email" />}
         </Field>
       </div>
 
@@ -502,7 +522,7 @@ function RlsMatrixPanel() {
     { area: "Shop Settings", view: "Active Shop members", change: "Shop Admins only" },
     { area: "Team & Roles", view: "Active Shop members", change: "Shop Admins only" },
     { area: "Compliance Audit Log", view: "Shop Admins and Inspectors", change: "Locked after creation — entries cannot be edited or removed" },
-    { area: "Certificates & Attachments", view: "Active Shop members", change: "Active Shop members" },
+    { area: "Certificates & Attachments", view: "Active Shop members", change: "Active Shop members can upload; only Shop Admins and Inspectors can overwrite or delete" },
   ];
   return (
     <div>
@@ -529,16 +549,20 @@ function RlsMatrixPanel() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: (id: string) => React.ReactNode }) {
+  const id = useId();
   return (
     <div>
-      <label className="mb-1 block text-sm font-medium text-[#344054]">{label}</label>
-      {children}
+      <label htmlFor={id} className="mb-1 block text-sm font-medium text-[#344054]">
+        {label}
+      </label>
+      {children(id)}
     </div>
   );
 }
 
 function NumberInput({
+  id,
   value,
   onChange,
   disabled,
@@ -546,6 +570,7 @@ function NumberInput({
   max,
   className,
 }: {
+  id?: string;
   value: number;
   onChange: (v: number) => void;
   disabled?: boolean;
@@ -555,6 +580,7 @@ function NumberInput({
 }) {
   return (
     <input
+      id={id}
       type="number"
       value={value}
       min={min}
@@ -570,12 +596,14 @@ function NumberInput({
 }
 
 function TextInput({
+  id,
   value,
   onChange,
   disabled,
   type = "text",
   mono,
 }: {
+  id?: string;
   value: string;
   onChange: (v: string) => void;
   disabled?: boolean;
@@ -584,6 +612,7 @@ function TextInput({
 }) {
   return (
     <input
+      id={id}
       type={type}
       value={value}
       disabled={disabled}

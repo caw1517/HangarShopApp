@@ -106,7 +106,7 @@ export function PreviewWorkspace({ section, onBack }: { section: PreviewSection;
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-xs text-[#667085]">No data is tracked here yet in this slice.</p>
+          <p className="mt-4 text-xs text-[#667085]">No data is tracked here yet.</p>
         </div>
       </div>
     </div>
