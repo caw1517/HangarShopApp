@@ -42,7 +42,14 @@ jobs:
             // head commit. A reopened PR may have had commits pushed while it was
             // closed, so approvals reset the same way.
             if (action === 'synchronize' || action === 'reopened') {
-              let stripFailed = false;
+              // Strip both labels, but only report on the ones we actually
+              // touched. Track three outcomes so the failure message names
+              // exactly what happened: removed (removeLabel succeeded), failed
+              // (non-404 error — the label was present but we could not remove
+              // it), and absent (404 — the label was not on the PR).
+              const removed = [];
+              const failed = [];
+              const absent = [];
               for (const label of [TESTER, CANAAN]) {
                 try {
                   await github.rest.issues.removeLabel({
@@ -51,34 +58,62 @@ jobs:
                     issue_number: prNumber,
                     name: label,
                   });
+                  removed.push(label);
                 } catch (err) {
                   // 404 => label wasn't present; nothing to remove.
-                  if (err.status === 404) continue;
-                  // The strip can fail for any reason (e.g. a read-only
-                  // GITHUB_TOKEN on fork PRs, or an API error). Don't swallow
-                  // the failure: warn that the label could not be removed and
-                  // that reviewers must remove it by hand, then still fail the
-                  // job below.
-                  stripFailed = true;
+                  if (err.status === 404) {
+                    absent.push(label);
+                    continue;
+                  }
+                  failed.push(label);
                   core.warning(
                     `Could not remove "${label}" (e.g. fork PR or API error); ` +
                     'reviewers must remove it by hand and re-review.'
                   );
                 }
               }
+
+              // Quote each name and join with a conjunction: `"A"` or
+              // `"A" and "B"` (conj = 'and' | 'or').
+              const quoteJoin = (names, conj) =>
+                names.map((n) => `"${n}"`).join(` ${conj} `);
+              const ownerFor = (label) =>
+                label === TESTER
+                  ? 'Hangar Tester removes tester-approved'
+                  : 'Canaan removes canaan-approved';
+
+              let middle = '';
+              if (removed.length === 0 && failed.length === 0) {
+                middle =
+                  `Neither "${TESTER}" nor "${CANAAN}" was on the PR, so ` +
+                  'there was nothing to remove. ';
+              } else {
+                if (removed.length > 0) {
+                  middle += `Removed ${quoteJoin(removed, 'and')}. `;
+                }
+                if (failed.length > 0) {
+                  middle +=
+                    `Could not remove ${quoteJoin(failed, 'or')} ` +
+                    'automatically (e.g. fork PR or API error): ' +
+                    `${failed.map(ownerFor).join(' and ')} by hand. `;
+                }
+                if (absent.length > 0) {
+                  middle += `${quoteJoin(absent, 'or')} was not on the PR. `;
+                }
+              }
+
               core.setFailed(
                 (action === 'reopened'
                   ? 'The PR was reopened; commits may have been pushed while it ' +
                     'was closed, which resets approvals. '
                   : 'New commits were pushed, which resets approvals. ') +
-                (stripFailed
-                  ? `Both "${TESTER}" and "${CANAAN}" should be removed, but ` +
-                    'could not be removed automatically (e.g. fork PR or API ' +
-                    'error): Hangar Tester removes tester-approved and Canaan ' +
-                    'removes canaan-approved by hand. '
-                  : `Both "${TESTER}" and "${CANAAN}" have been removed. `) +
+                middle +
                 'Hangar Tester and Canaan must each re-review and re-approve ' +
                 'the current head commit.'
+              );
+              core.info(
+                `Strip summary — removed: [${removed.join(', ')}], ` +
+                `failed: [${failed.join(', ')}], absent: [${absent.join(', ')}].`
               );
               return;
             }
