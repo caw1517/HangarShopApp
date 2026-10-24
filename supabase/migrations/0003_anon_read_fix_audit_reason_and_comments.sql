@@ -2,7 +2,7 @@
 -- Issue #28
 --
 -- Applies cleanly ON TOP OF 0001 + 0002 (0001 SQL is unchanged — comment-only
--- edits; 0002 is unchanged), as noted at lines 319-321 below.
+-- edits; 0002 is unchanged), as noted in section 6 below.
 -- Idempotent where reasonable so it can be re-run safely.
 --
 -- Implements the reviewer's round-3 SQL findings:
