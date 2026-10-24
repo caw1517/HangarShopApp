@@ -12,11 +12,16 @@
 --       from auth.uid() / the JWT.
 --   7.  REVOKE INSERT on audit_log from every role (incl. service_role). The
 --       SECURITY DEFINER capture trigger is the only writer.
---   8.  Lock down EXECUTE on the SECURITY DEFINER / trigger functions: deny
---       anon + PUBLIC everywhere; deny authenticated on is_platform_owner and
---       the trigger functions (a firing trigger needs no EXECUTE grant); keep
---       authenticated EXECUTE only on the helpers RLS policies call as the
---       invoking user (has_org_role, is_active_org_member, storage_object_org_id).
+--   8.  Lock down EXECUTE on the SECURITY DEFINER / trigger functions against
+--       Supabase's default privileges (which GRANT EXECUTE on every new function
+--       directly to anon/authenticated/service_role, so a REVOKE FROM PUBLIC is
+--       not enough): deny PUBLIC + anon + service_role everywhere; also deny
+--       authenticated on is_platform_owner and the trigger functions (a firing
+--       trigger needs no EXECUTE grant); keep authenticated EXECUTE only on the
+--       helpers RLS policies call as the invoking user (has_org_role,
+--       is_active_org_member, storage_object_org_id). Finding 8b strips the
+--       analogous default table grants from anon (and platform_owners wholesale
+--       from anon + authenticated).
 --   9.  Create the private shop-documents storage bucket.
 --   10a. Make org_memberships.org_id immutable so an org_id change can't slip
 --        past the Last-Admin Guard.
@@ -169,31 +174,60 @@ REVOKE INSERT ON TABLE audit_log FROM PUBLIC, anon, authenticated, service_role;
 
 -- =========================================================================
 -- 8. Function EXECUTE lockdown
+--
+-- CRITICAL: a Supabase project ships default privileges in schema public
+-- (pg_default_acl, owned by postgres / supabase_admin) that GRANT EXECUTE on
+-- every newly created function DIRECTLY to anon, authenticated and
+-- service_role. A plain "REVOKE EXECUTE ... FROM PUBLIC" does NOT remove those
+-- direct role grants -- so each function below must revoke from the roles by
+-- name, not just from PUBLIC, or anon keeps EXECUTE on the live project.
+-- (0001 already revokes anon/authenticated from provision_shop by name and is
+-- therefore locked down; the helpers/trigger functions below were only revoked
+-- from PUBLIC in 0001, so they are tightened here.)
 -- =========================================================================
 
 -- Trigger functions: a firing trigger never checks EXECUTE on its function, so
 -- no role needs a direct grant. Deny everyone (defense in depth against a
--- hand-rolled direct call).
-REVOKE EXECUTE ON FUNCTION record_audit_log() FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION enforce_last_admin_guard() FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION prevent_org_membership_hard_delete() FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION prevent_audit_log_mutation() FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION prevent_truncate() FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION prevent_org_membership_org_change() FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION validate_organization_timezone() FROM PUBLIC;
+-- hand-rolled direct call) -- PUBLIC and every Supabase role by name.
+REVOKE EXECUTE ON FUNCTION record_audit_log() FROM PUBLIC, anon, authenticated, service_role;
+REVOKE EXECUTE ON FUNCTION enforce_last_admin_guard() FROM PUBLIC, anon, authenticated, service_role;
+REVOKE EXECUTE ON FUNCTION prevent_org_membership_hard_delete() FROM PUBLIC, anon, authenticated, service_role;
+REVOKE EXECUTE ON FUNCTION prevent_audit_log_mutation() FROM PUBLIC, anon, authenticated, service_role;
+REVOKE EXECUTE ON FUNCTION prevent_truncate() FROM PUBLIC, anon, authenticated, service_role;
+REVOKE EXECUTE ON FUNCTION prevent_org_membership_org_change() FROM PUBLIC, anon, authenticated, service_role;
+REVOKE EXECUTE ON FUNCTION validate_organization_timezone() FROM PUBLIC, anon, authenticated, service_role;
 
 -- is_platform_owner is only ever called INSIDE provision_shop (SECURITY
 -- DEFINER). No direct caller needs it; authenticated must not be able to probe
--- it. provision_shop keeps calling it fine because that happens as the
--- function owner, not as the invoking role.
-REVOKE EXECUTE ON FUNCTION is_platform_owner() FROM PUBLIC;
+-- it, and service_role reaches provisioning through provision_shop, not here.
+-- provision_shop keeps calling it fine because that happens as the function
+-- owner, not as the invoking role.
+REVOKE EXECUTE ON FUNCTION is_platform_owner() FROM PUBLIC, anon, authenticated, service_role;
 
 -- Helpers evaluated INSIDE RLS policies run as the invoking role, so
--- authenticated keeps EXECUTE while anon / PUBLIC are denied. (anon can never
--- be an active member, and these are only used by policies, never by anon.)
-REVOKE EXECUTE ON FUNCTION is_active_org_member(uuid) FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION has_org_role(uuid, text[]) FROM PUBLIC;
-REVOKE EXECUTE ON FUNCTION storage_object_org_id(text) FROM PUBLIC;
+-- authenticated keeps EXECUTE while PUBLIC, anon and service_role are denied.
+-- (anon can never be an active member; service_role has BYPASSRLS so it never
+-- evaluates these policies; and they are only ever referenced from policies.)
+REVOKE EXECUTE ON FUNCTION is_active_org_member(uuid) FROM PUBLIC, anon, service_role;
+REVOKE EXECUTE ON FUNCTION has_org_role(uuid, text[]) FROM PUBLIC, anon, service_role;
+REVOKE EXECUTE ON FUNCTION storage_object_org_id(text) FROM PUBLIC, anon, service_role;
 GRANT EXECUTE ON FUNCTION is_active_org_member(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION has_org_role(uuid, text[]) TO authenticated;
 GRANT EXECUTE ON FUNCTION storage_object_org_id(text) TO authenticated;
+
+-- =========================================================================
+-- 8b. Table-grant lockdown against the same Supabase default privileges, which
+--     also GRANT ALL on every new table to anon, authenticated and
+--     service_role. RLS already denies anon (it can never be an active member),
+--     but strip the write privileges anon has no business holding so the only
+--     grant anon retains on a tenant table is SELECT (still RLS-gated). audit_log
+--     INSERT/UPDATE/DELETE/TRUNCATE are already revoked from anon (finding 7
+--     above and 0001's final lockdown).
+-- =========================================================================
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON TABLE organizations FROM anon;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON TABLE org_memberships FROM anon;
+
+-- platform_owners is deliberately opaque to tenants: no RLS policies, read only
+-- through the SECURITY DEFINER helpers (which run as the owner) or the service
+-- role. Neither anon nor authenticated should hold ANY direct grant on it.
+REVOKE ALL ON TABLE platform_owners FROM anon, authenticated;

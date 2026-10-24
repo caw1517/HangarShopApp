@@ -515,6 +515,140 @@ describe("Function EXECUTE lockdown (0002, finding 8)", () => {
   });
 });
 
+describe("Grant lockdown survives Supabase's default privileges (0002, findings 8 & 8b)", () => {
+  // A live Supabase project ships default privileges in schema public that
+  // GRANT EXECUTE on every new function and ALL on every new table directly to
+  // anon/authenticated/service_role. REVOKE ... FROM PUBLIC does NOT undo those
+  // direct grants. The harness reproduces those defaults before applying the
+  // migrations, so these tests catch a migration that only revokes from PUBLIC.
+
+  it("SANITY: the harness actually emulates the defaults (a fresh public function is EXECUTE-able by anon)", async () => {
+    // Created by the same migration-owner role as the migration's functions, so
+    // it inherits the emulated default privilege. If this is false the harness
+    // is NOT emulating the defaults and every assertion below is vacuous.
+    await db.exec(`CREATE FUNCTION public._scratch_default_priv() RETURNS int LANGUAGE sql AS 'SELECT 1'`);
+    const scratch = await one(
+      `SELECT has_function_privilege('anon', 'public._scratch_default_priv()', 'EXECUTE') AS anon,
+              has_function_privilege('authenticated', 'public._scratch_default_priv()', 'EXECUTE') AS authed,
+              has_function_privilege('service_role', 'public._scratch_default_priv()', 'EXECUTE') AS svc`,
+    );
+    expect(scratch.anon).toBe(true);
+    expect(scratch.authed).toBe(true);
+    expect(scratch.svc).toBe(true);
+    // And a fresh public table is likewise fully granted by default.
+    await db.exec(`CREATE TABLE public._scratch_default_priv_tbl (id int)`);
+    const tbl = await one(
+      `SELECT has_table_privilege('anon', 'public._scratch_default_priv_tbl', 'INSERT') AS anon_insert`,
+    );
+    expect(tbl.anon_insert).toBe(true);
+  });
+
+  it("revokes anon EXECUTE on every migration function despite the default grant (the regression: PUBLIC-only revokes would leave these true)", async () => {
+    const fns = [
+      "is_active_org_member(uuid)",
+      "has_org_role(uuid, text[])",
+      "storage_object_org_id(text)",
+      "is_platform_owner()",
+      "record_audit_log()",
+      "enforce_last_admin_guard()",
+      "prevent_org_membership_hard_delete()",
+      "prevent_audit_log_mutation()",
+      "prevent_truncate()",
+      "prevent_org_membership_org_change()",
+      "validate_organization_timezone()",
+      "provision_shop(text, text, text, text, text, text)",
+    ];
+    for (const fn of fns) {
+      const r = await one(`SELECT has_function_privilege('anon', '${fn}', 'EXECUTE') AS ok`);
+      expect(r.ok, `anon should NOT have EXECUTE on ${fn}`).toBe(false);
+    }
+  });
+
+  it("denies authenticated EXECUTE on is_platform_owner and every trigger function, but keeps the RLS helpers", async () => {
+    const deniedForAuthed = [
+      "is_platform_owner()",
+      "record_audit_log()",
+      "enforce_last_admin_guard()",
+      "prevent_org_membership_hard_delete()",
+      "prevent_audit_log_mutation()",
+      "prevent_truncate()",
+      "prevent_org_membership_org_change()",
+      "validate_organization_timezone()",
+      "provision_shop(text, text, text, text, text, text)",
+    ];
+    for (const fn of deniedForAuthed) {
+      const r = await one(`SELECT has_function_privilege('authenticated', '${fn}', 'EXECUTE') AS ok`);
+      expect(r.ok, `authenticated should NOT have EXECUTE on ${fn}`).toBe(false);
+    }
+    const helpers = ["is_active_org_member(uuid)", "has_org_role(uuid, text[])", "storage_object_org_id(text)"];
+    for (const fn of helpers) {
+      const r = await one(`SELECT has_function_privilege('authenticated', '${fn}', 'EXECUTE') AS ok`);
+      expect(r.ok, `authenticated SHOULD keep EXECUTE on RLS helper ${fn}`).toBe(true);
+    }
+  });
+
+  it("keeps provision_shop EXECUTE-able only by service_role", async () => {
+    const fn = "provision_shop(text, text, text, text, text, text)";
+    const r = await one(
+      `SELECT has_function_privilege('service_role', '${fn}', 'EXECUTE') AS svc,
+              has_function_privilege('anon', '${fn}', 'EXECUTE') AS anon,
+              has_function_privilege('authenticated', '${fn}', 'EXECUTE') AS authed`,
+    );
+    expect(r.svc).toBe(true);
+    expect(r.anon).toBe(false);
+    expect(r.authed).toBe(false);
+  });
+
+  it("strips anon's default write grants on the tenant tables and locks platform_owners to the service role", async () => {
+    // anon keeps only RLS-gated SELECT on the tenant tables; every write is gone.
+    for (const tbl of ["organizations", "org_memberships"]) {
+      const r = await one(
+        `SELECT has_table_privilege('anon', '${tbl}', 'INSERT') AS ins,
+                has_table_privilege('anon', '${tbl}', 'UPDATE') AS upd,
+                has_table_privilege('anon', '${tbl}', 'DELETE') AS del`,
+      );
+      expect(r.ins, `anon INSERT on ${tbl}`).toBe(false);
+      expect(r.upd, `anon UPDATE on ${tbl}`).toBe(false);
+      expect(r.del, `anon DELETE on ${tbl}`).toBe(false);
+    }
+    // audit_log: no write of any kind for anon (findings 7 + 0001 final lockdown).
+    const al = await one(
+      `SELECT has_table_privilege('anon', 'audit_log', 'INSERT') AS ins,
+              has_table_privilege('authenticated', 'audit_log', 'INSERT') AS authed_ins,
+              has_table_privilege('authenticated', 'audit_log', 'SELECT') AS authed_sel`,
+    );
+    expect(al.ins).toBe(false);
+    expect(al.authed_ins).toBe(false);
+    expect(al.authed_sel).toBe(true); // SELECT survives; RLS still scopes it to admin/inspector
+    // platform_owners: opaque to tenants, no direct grant for anon or authenticated.
+    const po = await one(
+      `SELECT has_table_privilege('anon', 'platform_owners', 'SELECT') AS anon_sel,
+              has_table_privilege('authenticated', 'platform_owners', 'SELECT') AS authed_sel`,
+    );
+    expect(po.anon_sel).toBe(false);
+    expect(po.authed_sel).toBe(false);
+  });
+
+  it("enforces the anon EXECUTE denial at runtime via SET ROLE, not just in the catalog", async () => {
+    await expect(
+      acting(db, { role: "anon" }, () => db.query(`SELECT is_active_org_member('${ORG_A}')`)),
+    ).rejects.toThrow(/permission denied for function is_active_org_member/i);
+    await expect(
+      acting(db, { role: "anon" }, () => db.query(`SELECT record_audit_log()`)),
+    ).rejects.toThrow(/permission denied for function record_audit_log/i);
+  });
+
+  it("keeps authenticated RLS fully working under the tightened grants", async () => {
+    await seedTwoShops(db);
+    const orgs = await acting(db, adminA, () => rows(`SELECT id FROM organizations`));
+    expect(orgs.map((o) => o.id)).toEqual([ORG_A]);
+    const res = await acting(db, adminA, () =>
+      db.query(`UPDATE organizations SET due_soon_days=60 WHERE id='${ORG_A}'`),
+    );
+    expect(res.affectedRows).toBe(1);
+  });
+});
+
 describe("Private shop-documents bucket exists (0002, finding 9)", () => {
   it("registers the shop-documents bucket as private", async () => {
     const bucket = await one(`SELECT id, name, public FROM storage.buckets WHERE id='shop-documents'`);

@@ -65,19 +65,34 @@ const BOOTSTRAP = `
   ALTER TABLE storage.objects FORCE ROW LEVEL SECURITY;
 
   GRANT USAGE ON SCHEMA auth, storage, public TO anon, authenticated, service_role;
+
+  -- Supabase ships default privileges in schema public (pg_default_acl, owned by
+  -- postgres / supabase_admin) that AUTOMATICALLY grant ALL on every new
+  -- table/sequence and EXECUTE on every new function to anon, authenticated and
+  -- service_role. A migration's plain "REVOKE ... FROM PUBLIC" does NOT remove
+  -- these *direct role* grants, so a function/table is still reachable by anon
+  -- unless the migration also revokes from anon explicitly. We reproduce the
+  -- defaults here, BEFORE applying the migrations, so the grant-lockdown tests
+  -- exercise the same hazard the live project has -- otherwise "anon denied
+  -- EXECUTE" would pass for the wrong reason (PGlite grants no such defaults).
+  -- These apply to objects created AFTER this statement by the current
+  -- (migration-owner) role, i.e. everything the migrations create in public.
+  ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated, service_role;
+  ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO anon, authenticated, service_role;
+  ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
 `;
 
 /**
- * Table grants Supabase applies to its roles. Run AFTER the migration so the
- * migration's final REVOKE of UPDATE/DELETE/TRUNCATE on audit_log is not undone.
- * We deliberately grant SELECT-only on audit_log to authenticated.
+ * storage.objects lives in the (stubbed) storage schema, which the public-schema
+ * default privileges above do not cover; Supabase grants the storage roles table
+ * access there directly. RLS on storage.objects still governs every row. Run
+ * AFTER the migrations so nothing in them is relied on to pre-exist. We no longer
+ * grant the PUBLIC-schema tables here: the emulated default privileges above
+ * already grant them (as the live project does), and the migrations then revoke
+ * down to the intended surface -- emulating, not papering over, the real grants.
  */
 const POST_MIGRATION_GRANTS = `
-  GRANT SELECT, INSERT, UPDATE ON organizations TO authenticated;
-  GRANT SELECT, INSERT, UPDATE ON org_memberships TO authenticated;
-  GRANT SELECT ON audit_log TO authenticated;
-  GRANT SELECT ON organizations, org_memberships, audit_log TO anon;
-  GRANT SELECT, INSERT, UPDATE, DELETE ON storage.objects TO authenticated, anon;
+  GRANT SELECT, INSERT, UPDATE, DELETE ON storage.objects TO anon, authenticated, service_role;
 `;
 
 export async function createTestDb(): Promise<PGlite> {
