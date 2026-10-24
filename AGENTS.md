@@ -6,7 +6,7 @@ Every agent working on this repo follows these rules: Claude Code, Codex, review
     - Only Canaan adds `canaan-approved`. Agents never add, remove, or re-add it, even though all agents share the `caw1517` account.
     - No agent adds `tester-approved` except Hangar Tester, after its written review.
     - No agent ever uses `gh pr merge --admin` or otherwise bypasses or overrides the `approval-gate` check.
-    - Fork PRs: `GITHUB_TOKEN` is read-only on forks, so the workflow can't strip the labels. Reviewers must re-check fork PRs by hand after any new commits.
+    - Failed label strip: If the workflow can't remove the approval labels (e.g. a fork PR, where `GITHUB_TOKEN` is read-only, or an API error), it warns and still fails the check; Hangar Tester removes `tester-approved` and Canaan removes `canaan-approved` by hand, and both re-review the current commit.
 2. PRs are small: one ticket per PR, linked to its issue, saying what changed and how it was tested.
 3. Hangar Tester reviews every PR — code review, UI verification, app testing, and PR review — and tests must pass before Canaan is asked to look.
 4. Canaan approves each wayfinder stage (map, key decisions, spec, ticket list) before build starts.

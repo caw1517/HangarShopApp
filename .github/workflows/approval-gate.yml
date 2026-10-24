@@ -54,15 +54,15 @@ jobs:
                 } catch (err) {
                   // 404 => label wasn't present; nothing to remove.
                   if (err.status === 404) continue;
-                  // On fork PRs GITHUB_TOKEN is read-only, so the strip can fail.
-                  // Don't swallow the failure: warn that labels could not be
-                  // removed (likely a fork PR) and that reviewers must re-check
-                  // by hand, then still fail the job below.
+                  // The strip can fail for any reason (e.g. a read-only
+                  // GITHUB_TOKEN on fork PRs, or an API error). Don't swallow
+                  // the failure: warn that the label could not be removed and
+                  // that reviewers must remove it by hand, then still fail the
+                  // job below.
                   stripFailed = true;
                   core.warning(
-                    `Could not remove "${label}" (likely a fork PR where ` +
-                    'GITHUB_TOKEN is read-only). Reviewers must re-check this PR ' +
-                    'by hand after any new commits.'
+                    `Could not remove "${label}" (e.g. fork PR or API error); ` +
+                    'reviewers must remove it by hand and re-review.'
                   );
                 }
               }
@@ -71,14 +71,14 @@ jobs:
                   ? 'The PR was reopened; commits may have been pushed while it ' +
                     'was closed, which resets approvals. '
                   : 'New commits were pushed, which resets approvals. ') +
-                `Both "${TESTER}" and "${CANAAN}" should be removed. Hangar ` +
-                'Tester and Canaan must each re-review and re-approve the ' +
-                'current head commit.' +
                 (stripFailed
-                  ? ' Labels could not be removed automatically (likely a fork ' +
-                    'PR): Hangar Tester removes tester-approved and Canaan ' +
-                    'removes canaan-approved by hand.'
-                  : '')
+                  ? `Both "${TESTER}" and "${CANAAN}" should be removed, but ` +
+                    'could not be removed automatically (e.g. fork PR or API ' +
+                    'error): Hangar Tester removes tester-approved and Canaan ' +
+                    'removes canaan-approved by hand. '
+                  : `Both "${TESTER}" and "${CANAAN}" have been removed. `) +
+                'Hangar Tester and Canaan must each re-review and re-approve ' +
+                'the current head commit.'
               );
               return;
             }

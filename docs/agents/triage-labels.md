@@ -21,5 +21,5 @@ Two additional labels drive the PR dual-approval gate (see `AGENTS.md` rule 1): 
 - Only Hangar Tester adds `tester-approved`, after its written review.
 - Only Canaan adds `canaan-approved`. Agents never add, remove, or re-add it, even though all agents share the `caw1517` account.
 - The workflow strips both labels when new commits are pushed and when the PR is reopened, so approvals always apply to the current commit.
-- Fork PRs: `GITHUB_TOKEN` is read-only on forks, so the workflow can't strip the labels. Reviewers must re-check fork PRs by hand after any new commits.
+- Failed label strip: If the workflow can't remove the approval labels (e.g. a fork PR, where `GITHUB_TOKEN` is read-only, or an API error), it warns and still fails the check; Hangar Tester removes `tester-approved` and Canaan removes `canaan-approved` by hand, and both re-review the current commit.
 - No agent ever uses `gh pr merge --admin` or otherwise bypasses or overrides the `approval-gate` check.
