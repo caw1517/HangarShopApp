@@ -65,7 +65,7 @@ If anything is pending, keep the PR as a draft. -->
 
 1. Mark the PR "ready for review" once the verify steps pass (drafts are ignored).
 2. Hangar Tester (`RealCawBot`) reviews; Request changes starts the fix loop (Hangar Dev's automatic **[Claude Code]** run, max 3 rounds, then "address review" by hand).
-3. Tester verifies each fix, resolves its threads, re-approves, and adds `tester-approved` once every thread is resolved.
+3. Tester verifies each fix, resolves its threads, re-approves the current head, and adds `tester-approved` only when there are zero open findings (blocking threads **and** review-body suggestions/nits). Any push strips both labels (#39), so both re-approve.
 4. Canaan adds `canaan-approved` and squash-merges.
 
 Claude Code never adds or removes labels, approves, resolves threads, or merges. Only Canaan adds `canaan-approved` and squash-merges.

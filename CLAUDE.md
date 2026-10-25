@@ -61,9 +61,9 @@ Open the PR yourself as soon as the work is done. Don't wait to be asked.
 
 Nothing merges until **both** approvals are in and the review is fully clear:
 
-- **Hangar Tester** (as `RealCawBot`) reviews code, the app, and every How to verify step. Blocking findings are inline threads; suggestions are in the review body. It resolves its own threads once each fix is verified, re-approves, and adds `tester-approved` only after **every** thread is resolved.
+- **Hangar Tester** (as `RealCawBot`) reviews code, the app, and every How to verify step. Blocking findings are inline threads; suggestions are in the review body. It resolves its own threads once each fix is verified, and adds `tester-approved` only when there are **zero open findings** (blocking threads **and** review-body suggestions/nits), after re-approving the current head; it re-adds the label after any later push so the label is newer than the push.
 - **Canaan** reviews last, adds `canaan-approved`, and **squash-merges**. Only Canaan adds that label.
-- The `approval-gate` check must pass (both labels present on the current commit; the upgraded gate also checks who added each label, treats labels older than the latest push as stale, and fails on any unresolved thread). Any new push means approvals must be given again.
+- The `approval-gate` check must pass: both labels (`tester-approved`, `canaan-approved`) present on the current commit. Today's gate (#39) **strips both labels on every push and on reopen**, so any new push means both approvals must be given again; if the automatic strip fails (a fork PR or an API error), Tester removes `tester-approved` and Canaan removes `canaan-approved` by hand. The actor check (who added each label), the stale-approval check (labels older than the latest push) and the unresolved-thread check are a **planned 560XL upgrade, not live yet** — don't assume open threads are enforced by the gate today.
 
 **Claude Code never:** adds or removes labels, approves a PR, resolves review threads, merges (including `gh pr merge --admin`), pushes or force-pushes to `main`, or amends, rebases or force-pushes a PR branch.
 
