@@ -63,6 +63,9 @@ list them under "Not testable yet" instead, and those items do not keep the PR i
 ## Checklist
 
 - [ ] UI ports the v5.1 prototype 1:1 and follows `DESIGN.md` (or no UI change)
+- [ ] No spec-speak or ticket/issue numbers in UI copy; demo controls only in the `Tweaks` pill (collapsed by default)
+- [ ] Flush split panes (no floating gaps or cards between panes); one status pill per row
+- [ ] RLS on new tables; no edits to applied migrations
 - [ ] No secrets, tokens or personal paths; env vars by name only
 - [ ] Generic shop names only
 - [ ] No new dependencies or paid services (or Canaan approved them)

@@ -26,6 +26,7 @@ Canaan picks an issue labeled `ready-for-agent` and hands it to you (for example
 ## Design and the v5.1 prototype
 
 - Every UI slice ports the approved **v5.1 prototype 1:1**: the same shell, `index.css` tokens and Untitled UI components, following `DESIGN.md` and its guardrails. Never invent generic placeholder chrome.
+- Follow these anti-vibe-coding rules (not all are spelled out in `DESIGN.md`): no spec-speak or ticket/issue numbers in UI copy; demo/prototype controls only in the `Tweaks` pill (collapsed by default); flush split panes (no floating gaps or cards between panes); one status pill per row.
 - The prototype source lives at `/workspace/hangar-shadcn-seed/src/` on Hangar's box, not on Canaan's PC. If a copy exists in this repo, use that; otherwise stop and ask Canaan for it.
 - All UI is responsive: phone, tablet and desktop.
 
@@ -109,6 +110,8 @@ Any PR touching `.github/workflows/` gets an extra security review from Hangar T
 - **No secrets.** No tokens, keys, passwords or personal paths in commits, PRs or comments. Env vars by name only.
 - **Generic shop names only.** Never use a real employer's name in code, seed data, tests, issues, PRs or comments; use generic names such as "Demo Hangar" or "Shop A".
 - **Append-only records.** Follow the ADRs: forced RLS per Shop (`ADR-0001`), immutable corrections and the append-only audit log (`ADR-0002`), the offline outbox (`ADR-0003`).
+- **Append-only migrations.** Supabase migrations are append-only: never edit a migration that has already been applied; fix forward with a new numbered migration.
+- **RLS on every new table.** RLS is required (forced, per Shop) on every new table, with tests.
 - When in doubt, stop and ask Canaan.
 
 ## Notes

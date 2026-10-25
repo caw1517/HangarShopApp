@@ -12,7 +12,7 @@ labels: needs-triage
 {Why this exists and what the user gets. Link the spec, ADRs (`docs/adr/`), glossary (`CONTEXT.md`), and decisions. The issue plus its linked docs must be enough to build it; nothing else needed.}
 
 ## Files to create or change
-- `supabase/migrations/NNNN_{slug}.sql`: {tables, RLS, triggers}
+- `supabase/migrations/NNNN_{slug}.sql`: {tables, RLS, triggers} — new migration file; never edit an applied one
 - `src/lib/domain/{module}.ts`: {domain logic}
 - `src/components/views/{View}.tsx`: {UI, ported from the v5.1 prototype}
 - `src/__tests__/{slug}.test.ts`: {tests}
@@ -28,6 +28,8 @@ labels: needs-triage
 - [ ] {observable, testable outcome}
 - [ ] `npm test`, `npx tsc --noEmit` and `npm run build` pass.
 - [ ] UI matches the v5.1 prototype and `DESIGN.md` 1:1.
+- [ ] No spec-speak or ticket/issue numbers in UI copy; demo controls only in the `Tweaks` pill; flush split panes; one status pill per row.
+- [ ] RLS on new tables; no edits to applied migrations.
 
 ## How to verify
 **Commands** (each with an Expected result)
