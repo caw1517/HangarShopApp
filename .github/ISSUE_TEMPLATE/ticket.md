@@ -55,7 +55,7 @@ labels: needs-triage
 
 ## References
 - Spec: #{spec issue}; ADRs: `docs/adr/0001-…`, `0002-…`, `0003-…`; glossary: `CONTEXT.md`.
-- **v5.1 prototype** — the v5.1 prototype seed (ask Canaan for a copy) and `DESIGN.md`: **port 1:1** (same shell, `index.css` tokens, Untitled UI components). No generic placeholder chrome. Use the copy in this repo if one exists; otherwise ask Canaan.
+- **v5.1 prototype** and `DESIGN.md`: **port 1:1** (same shell, `index.css` tokens, Untitled UI components). No generic placeholder chrome. Use the v5.1 prototype seed copy in this repo if one exists; otherwise stop and ask Canaan for it.
 - `CLAUDE.md`, `AGENTS.md`.
 
 ## PR rules
@@ -73,7 +73,7 @@ labels: needs-triage
 Work on GitHub issue #<N> in caw1517/HangarShopApp.
 
 1. Read the issue and every comment: `gh issue view <N> -R caw1517/HangarShopApp --comments`. Read CLAUDE.md, AGENTS.md, DESIGN.md, CONTEXT.md and the ADRs it references.
-2. Port the v5.1 prototype 1:1 (same shell, index.css tokens, Untitled UI components) from the v5.1 prototype seed (ask me for a copy). If a copy exists in this repo, use that; otherwise stop and ask me for it. Don't invent placeholder UI.
+2. Port the v5.1 prototype 1:1 (same shell, index.css tokens, Untitled UI components). Use the v5.1 prototype seed copy in this repo if one exists; otherwise stop and ask me for it. Don't invent placeholder UI.
 3. Post a plan first as a comment on the issue, tagged [Claude Code]: files to create or change, steps, how you'll verify, and a size estimate. No code yet. Wait for my OK. If it's too big for one evening, propose a split instead.
 4. After I OK it: branch `<type>/<N>-<slug>` from an up-to-date main, implement with small Conventional Commits, and add tests. Don't apply any migration to a live Supabase project; use PGlite for DB tests. Ask before adding dependencies.
 5. Run `npm test`, `npx tsc --noEmit` and `npm run build`, plus `npm run lint` if a lint script exists, and fix anything that fails.
