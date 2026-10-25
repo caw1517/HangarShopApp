@@ -35,6 +35,7 @@ labels: needs-triage
 2. `npm test` → Expected: all tests pass, including <new test file>.
 3. `npx tsc --noEmit` → Expected: no type errors.
 4. `npm run build` → Expected: build succeeds.
+5. `npm run lint` → Expected: no errors (skip if no lint script).
 
 **App / UI checks** (`npm run dev`, then open http://localhost:3000)
 1. <Go to screen X, do Y> → Expected: <what you should see>.

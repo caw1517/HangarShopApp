@@ -17,21 +17,30 @@ No issue: repo setup -->
 
 ### Setup
 
-<!-- Checkout, `npm install`, env vars by name only (never values). -->
+<!-- Checkout and install, env vars by name only (never values).
+Each line needs an Expected result and its actual result.
+When a check can't apply, give the expected result as "N/A: <reason>" (e.g. "N/A: no package.json on main yet"). -->
+
+- `gh pr checkout {number}` (replace `{number}` with this PR's number) → Expected: branch checked out · Result:
+- `npm install` → Expected: installs with no errors · Result:
 
 ### Build / typecheck / tests
 
-<!-- Exact commands run and their result. -->
+<!-- Exact commands run, each with an Expected result and its actual result.
+Use "N/A: <reason>" as the expected result when a command doesn't apply. -->
 
-- `npm test` (Vitest, incl. PGlite):
-- `npx tsc --noEmit`:
-- `npm run build`:
+- `npm test` (Vitest, incl. PGlite) → Expected: all tests pass, incl. PGlite · Result: pass/fail
+- `npx tsc --noEmit` → Expected: no type errors · Result: pass/fail
+- `npm run build` → Expected: build succeeds · Result: pass/fail
+- `npm run lint` → Expected: no errors (skip if no lint script) · Result: pass/fail
 
 ### App / UI checks
 
 <!-- `npm run dev`, then one numbered step per check: page or screen, what to do.
 Each step needs an Expected result and a Result: pass / fail / pending.
-If anything is pending, keep the PR as a draft. -->
+A pending numbered step keeps the PR as a draft.
+Checks that can only run after merge, or aren't testable yet, do NOT go here as pending steps —
+list them under "Not testable yet" instead, and those items do not keep the PR in draft. -->
 
 1. Step:
    - Expected:

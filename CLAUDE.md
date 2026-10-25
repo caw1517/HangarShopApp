@@ -37,7 +37,7 @@ Canaan picks an issue labeled `ready-for-agent` and hands it to you (for example
 - **Commits:** small and often, Conventional Commits, e.g. `feat(tools): add end-of-month due-date rule`, `fix: ...`, `test: ...`, `docs: ...`.
 - **PR title:** `<type>: <summary>`, **no issue or PR number** (GitHub appends `(#PR)` on squash), e.g. `feat: hierarchical locations tree`.
 - **PR body:** from `.github/pull_request_template.md`, with `Closes #N`. In a stacked split, every PR except the last says `Part of #N` and the last says `Closes #N`, so the issue closes only when the whole stack is merged. A setup PR with no issue says `No issue: repo setup`.
-- **Draft until verified:** open the PR as a draft while any How to verify step is still pending. Taking it out of draft ("ready for review", `gh pr ready N`) is what starts Hangar Tester's review; drafts are ignored.
+- **Draft until verified:** open the PR as a draft while any numbered How to verify step is still pending. Post-merge or not-yet-testable checks go **only** under **Not testable yet** (never as numbered steps marked `pending`), and those items do not keep the PR in draft. Taking it out of draft ("ready for review", `gh pr ready N`) is what starts Hangar Tester's review; drafts are ignored.
 - Never commit build output, `node_modules/`, `.env*` files, personal paths or secrets.
 
 ## Before opening the PR
@@ -45,7 +45,7 @@ Canaan picks an issue labeled `ready-for-agent` and hands it to you (for example
 1. `npm install` (or `npm ci`).
 2. `npm test` (Vitest, including the PGlite Postgres tests), `npx tsc --noEmit`, `npm run build`, plus any lint script that exists. Fix failures first.
 3. Run the issue's How to verify steps that can run on this PC.
-4. Write the PR's **How to verify** section: setup (env vars by name only), the commands above with their results, then numbered **App / UI checks** (`npm run dev`, which page, what to do), each with an **Expected** result and a **Result: pass / fail / pending**, and anything not testable yet.
+4. Write the PR's **How to verify** section: setup (env vars by name only) and the commands above, **each with an Expected result and its actual result** (use `N/A: <reason>` when a check doesn't apply), then numbered **App / UI checks** (`npm run dev`, which page, what to do), each with an **Expected** result and a **Result: pass / fail / pending**. Anything that can only run after merge or isn't testable yet goes under **Not testable yet**, not as a numbered pending step.
 5. Remove leftover debug code, `console.log`s and test flags.
 
 ## Opening the PR
