@@ -20,7 +20,7 @@ Canaan picks an issue labeled `ready-for-agent` and hands it to you (for example
 2. **Check the blockers are merged.** If one isn't, tell Canaan before planning.
 3. **Plan first. No code yet.** Post the plan as a comment on the issue, starting with `**[Claude Code]**`, and summarize it in chat: files to create or change, steps, how you'll verify (commands, then App/UI checks), and a size estimate. Ask instead of guessing.
 4. **Wait for Canaan's OK.** Re-confirm if the plan changes materially.
-5. **Too big?** One issue = one PR, one concern, about one evening of work (no hard line limit). If the plan is bigger or mixes concerns, stop and propose a split into sub-issues or stacked PRs. Create sub-issues with `gh issue create --template ticket.md` **only after Canaan agrees**. If the work grows mid-way, pause and tell him.
+5. **Too big?** One issue = one PR, one concern, about one evening of work (no hard line limit). If the plan is bigger or mixes concerns, stop and propose a split into sub-issues or stacked PRs. Create sub-issues with `gh issue create -R caw1517/HangarShopApp --template Ticket` (gh matches the front-matter **name** `Ticket`, not the filename `ticket.md`) **only after Canaan agrees**. If the work grows mid-way, pause and tell him.
 6. On "implement": branch, build in small commits, verify, and open the PR (below).
 
 ## Design and the v5.1 prototype
