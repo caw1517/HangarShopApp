@@ -2,9 +2,13 @@
 
 Every agent working on this repo follows these rules: Claude Code, Codex, reviewers, and the team lead.
 
-1. Nothing merges to `main` without Canaan's approval. Agents work only on branches and open PRs; Canaan merges.
+1. Nothing merges to `main` until both approvals are in and the `approval-gate` check passes. By process Hangar Tester reviews first (a written review comment plus the `tester-approved` label) and Canaan reviews last (the `canaan-approved` label); the workflow checks that both labels are present, it does not enforce the order. Pushing new commits or reopening the PR removes both labels, so approvals always apply to the current commit. Agents work only on branches and open PRs; Canaan merges.
+    - Only Canaan adds `canaan-approved`. Agents never add, remove, or re-add it, even though all agents share the `caw1517` account.
+    - No agent adds `tester-approved` except Hangar Tester, after its written review.
+    - No agent ever uses `gh pr merge --admin` or otherwise bypasses or overrides the `approval-gate` check.
+    - Failed label strip: If the workflow can't remove the approval labels (e.g. a fork PR, where `GITHUB_TOKEN` is read-only, or an API error), it warns and still fails the check; Hangar Tester removes `tester-approved` and Canaan removes `canaan-approved` by hand, and both re-review the current commit.
 2. PRs are small: one ticket per PR, linked to its issue, saying what changed and how it was tested.
-3. A second agent reviews every PR, and tests must pass, before Canaan is asked to look.
+3. Hangar Tester reviews every PR — code review, UI verification, app testing, and PR review — and tests must pass before Canaan is asked to look.
 4. Canaan approves each wayfinder stage (map, key decisions, spec, ticket list) before build starts.
 5. Design prototypes need Canaan's approval before they become tickets.
 6. Always ask Canaan first about new dependencies or paid services, data-model changes, anything touching security/auth, and deleting anything.

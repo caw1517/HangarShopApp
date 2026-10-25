@@ -1,0 +1,147 @@
+name: Approval gate
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled, unlabeled, edited]
+    branches: [main]
+
+# Runs for one PR execute one at a time, in order. queue: max (GitHub, May 2026)
+# keeps every pending run instead of replacing the pending one, so a strip-labels
+# run on a new push can't be dropped by a later label event.
+concurrency:
+  group: approval-gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+  queue: max
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  approval-gate:
+    name: approval-gate
+    runs-on: ubuntu-latest
+    steps:
+      # Canaan and all bots share one GitHub account, so GitHub's native
+      # "require N approvals" cannot distinguish reviewers. We gate on two
+      # labels instead: by process Hangar Tester reviews first (tester-approved)
+      # and Canaan reviews last and merges (canaan-approved). The check only
+      # verifies both labels are present; it does not enforce the order.
+      - name: Check dual-approval labels
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const TESTER = 'tester-approved';
+            const CANAAN = 'canaan-approved';
+            const prNumber = context.payload.pull_request.number;
+            const action = context.payload.action;
+
+            // New commits (synchronize) or a reopen invalidate prior approvals:
+            // strip both labels and fail so both reviewers re-approve the current
+            // head commit. A reopened PR may have had commits pushed while it was
+            // closed, so approvals reset the same way.
+            if (action === 'synchronize' || action === 'reopened') {
+              // Strip both labels, but only report on the ones we actually
+              // touched. Track three outcomes so the failure message names
+              // exactly what happened: removed (removeLabel succeeded), failed
+              // (non-404 error — the label was present but we could not remove
+              // it), and absent (404 — the label was not on the PR).
+              const removed = [];
+              const failed = [];
+              const absent = [];
+              for (const label of [TESTER, CANAAN]) {
+                try {
+                  await github.rest.issues.removeLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: prNumber,
+                    name: label,
+                  });
+                  removed.push(label);
+                } catch (err) {
+                  // 404 => label wasn't present; nothing to remove.
+                  if (err.status === 404) {
+                    absent.push(label);
+                    continue;
+                  }
+                  failed.push(label);
+                  core.warning(
+                    `Could not remove "${label}" (e.g. fork PR or API error); ` +
+                    'reviewers must remove it by hand and re-review.'
+                  );
+                }
+              }
+
+              // Quote each name and join with a conjunction: `"A"` or
+              // `"A" and "B"` (conj = 'and' | 'or').
+              const quoteJoin = (names, conj) =>
+                names.map((n) => `"${n}"`).join(` ${conj} `);
+              const ownerFor = (label) =>
+                label === TESTER
+                  ? 'Hangar Tester removes tester-approved'
+                  : 'Canaan removes canaan-approved';
+
+              let middle = '';
+              if (removed.length === 0 && failed.length === 0) {
+                middle =
+                  `Neither "${TESTER}" nor "${CANAAN}" was on the PR, so ` +
+                  'there was nothing to remove. ';
+              } else {
+                if (removed.length > 0) {
+                  middle += `Removed ${quoteJoin(removed, 'and')}. `;
+                }
+                if (failed.length > 0) {
+                  middle +=
+                    `Could not remove ${quoteJoin(failed, 'or')} ` +
+                    'automatically (e.g. fork PR or API error): ' +
+                    `${failed.map(ownerFor).join(' and ')} by hand. `;
+                }
+                if (absent.length > 0) {
+                  middle += `${quoteJoin(absent, 'or')} was not on the PR. `;
+                }
+              }
+
+              core.setFailed(
+                (action === 'reopened'
+                  ? 'The PR was reopened; commits may have been pushed while it ' +
+                    'was closed, which resets approvals. '
+                  : 'New commits were pushed, which resets approvals. ') +
+                middle +
+                'Hangar Tester and Canaan must each re-review and re-approve ' +
+                'the current head commit.'
+              );
+              core.info(
+                `Strip summary — removed: [${removed.join(', ')}], ` +
+                `failed: [${failed.join(', ')}], absent: [${absent.join(', ')}].`
+              );
+              return;
+            }
+
+            // Any other event (opened, labeled, unlabeled, edited) just re-checks
+            // the PR's CURRENT labels. "edited" also fires when the base branch is
+            // retargeted to main; we never strip labels on it.
+            // Read labels from the API rather than trusting the (possibly stale)
+            // event payload.
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 100,
+            });
+            const present = new Set(labels.map((l) => l.name));
+
+            const missing = [];
+            if (!present.has(TESTER)) {
+              missing.push(`Missing ${TESTER}: Hangar Tester adds this after its written review.`);
+            }
+            if (!present.has(CANAAN)) {
+              missing.push(`Missing ${CANAAN}: Canaan adds this label, as the final reviewer (by process, Canaan approves last).`);
+            }
+
+            if (missing.length > 0) {
+              core.setFailed(missing.join('\n'));
+              return;
+            }
+
+            core.info(`Both "${TESTER}" and "${CANAAN}" are present. Approval gate passed.`);
