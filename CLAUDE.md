@@ -27,7 +27,7 @@ Canaan picks an issue labeled `ready-for-agent` and hands it to you (for example
 
 - Every UI slice ports the approved **v5.1 prototype 1:1**: the same shell, `index.css` tokens and Untitled UI components, following `DESIGN.md` and its guardrails. Never invent generic placeholder chrome.
 - Follow these anti-vibe-coding rules (not all are spelled out in `DESIGN.md`): no spec-speak or ticket/issue numbers in UI copy; demo/prototype controls only in the `Tweaks` pill (collapsed by default); flush split panes (no floating gaps or cards between panes); one status pill per row.
-- The prototype source lives at `/workspace/hangar-shadcn-seed/src/` on Hangar's box, not on Canaan's PC. If a copy exists in this repo, use that; otherwise stop and ask Canaan for it.
+- The prototype lives in the **v5.1 prototype seed** (ask Canaan for a copy), not on Canaan's PC. If a copy exists in this repo, use that; otherwise stop and ask Canaan for it.
 - All UI is responsive: phone, tablet and desktop.
 
 ## Branch, commit and PR conventions
@@ -92,6 +92,10 @@ Every bot comment on GitHub starts with its role tag:
 - **[PM]**: Hangar PM (posts as `caw1517`)
 
 An untagged comment from `caw1517` is Canaan's. Always tag yours.
+
+`RealCawBot` is shared with the 560XL reviewers (`[Code Reviewer]`, `[Flight Test]`), so only `[Tester]`-tagged `RealCawBot` posts are Hangar Tester's — the same way untagged `caw1517` posts are Canaan's.
+
+Older wording elsewhere (e.g. `AGENTS.md`'s "all agents share the `caw1517` account", or `approval-gate.yml` comments about "a written review comment plus the label") is **superseded by this file**: Hangar Tester posts as `RealCawBot` and approves with a real GitHub **Approve** review. Reconciling the `AGENTS.md` and `approval-gate.yml` comment wording is tracked for PM in #39 (or a follow-up); don't edit those here.
 
 ## Ask Canaan first
 

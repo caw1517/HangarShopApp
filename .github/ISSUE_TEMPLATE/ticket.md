@@ -55,7 +55,7 @@ labels: needs-triage
 
 ## References
 - Spec: #{spec issue}; ADRs: `docs/adr/0001-…`, `0002-…`, `0003-…`; glossary: `CONTEXT.md`.
-- **v5.1 prototype** at `/workspace/hangar-shadcn-seed/src/` (on the box) and `DESIGN.md`: **port 1:1** (same shell, `index.css` tokens, Untitled UI components). No generic placeholder chrome. If the box path isn't reachable, use the copy in the repo if one exists; otherwise ask Canaan.
+- **v5.1 prototype** — the v5.1 prototype seed (ask Canaan for a copy) and `DESIGN.md`: **port 1:1** (same shell, `index.css` tokens, Untitled UI components). No generic placeholder chrome. Use the copy in this repo if one exists; otherwise ask Canaan.
 - `CLAUDE.md`, `AGENTS.md`.
 
 ## PR rules
@@ -64,7 +64,7 @@ labels: needs-triage
 - **Title:** `<type>: <summary>`, **no issue or PR number** (GitHub adds `(#PR)` on squash).
 - **Body:** `Closes #N`, a summary, the acceptance criteria as a checklist, and a **How to verify** section (setup, commands with results, numbered App/UI steps each with Expected, not-testable-yet).
 - **Draft** until the How to verify steps pass; then mark "ready for review" (that starts Hangar Tester's review).
-- **Review fixes in new commits only:** no amend, rebase or force-push. Reply on each thread with the change and SHA.
+- **Review fixes in new commits only:** no amend, rebase or force-push. Reply on each thread starting with `**[Claude Code]**`, with the change and the commit SHA.
 - Live database migrations only after Canaan's OK; PGlite is fine for tests. Ask Canaan before adding any dependency.
 - No agent adds `canaan-approved` or merges.
 
@@ -73,11 +73,11 @@ labels: needs-triage
 Work on GitHub issue #<N> in caw1517/HangarShopApp.
 
 1. Read the issue and every comment: `gh issue view <N> -R caw1517/HangarShopApp --comments`. Read CLAUDE.md, AGENTS.md, DESIGN.md, CONTEXT.md and the ADRs it references.
-2. Port the v5.1 prototype 1:1 (same shell, index.css tokens, Untitled UI components). It lives at /workspace/hangar-shadcn-seed/src/ on the box only. If a copy exists in this repo, use that; otherwise stop and ask me for it. Don't invent placeholder UI.
+2. Port the v5.1 prototype 1:1 (same shell, index.css tokens, Untitled UI components) from the v5.1 prototype seed (ask me for a copy). If a copy exists in this repo, use that; otherwise stop and ask me for it. Don't invent placeholder UI.
 3. Post a plan first as a comment on the issue, tagged [Claude Code]: files to create or change, steps, how you'll verify, and a size estimate. No code yet. Wait for my OK. If it's too big for one evening, propose a split instead.
 4. After I OK it: branch `<type>/<N>-<slug>` from an up-to-date main, implement with small Conventional Commits, and add tests. Don't apply any migration to a live Supabase project; use PGlite for DB tests. Ask before adding dependencies.
 5. Run `npm test`, `npx tsc --noEmit` and `npm run build` and fix anything that fails.
 6. Write the PR body: `Closes #<N>`, summary, acceptance criteria checklist, and a How to verify section (setup, commands with expected results, numbered App/UI steps each with Expected, anything not testable yet).
 7. Open the PR as a draft with title `<type>: <summary>` (no number). Run the verify steps you can; tell me when it's ready for me to mark "ready for review".
-Review fixes later go in new commits only (no amend/rebase/force-push). Never add labels or merge.
+Review fixes later go in new commits only (no amend/rebase/force-push); reply on each thread starting with **[Claude Code]** and the commit SHA. Never add labels or merge.
 ```
