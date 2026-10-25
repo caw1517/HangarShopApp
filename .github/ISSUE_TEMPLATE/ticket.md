@@ -62,8 +62,8 @@ labels: needs-triage
 - **Branch:** `<type>/<issue#>-<slug>` from an up-to-date `main` (types: `feat`, `fix`, `chore`, `docs`, `test`, `spike`).
 - **Commits:** small, Conventional Commits (`feat(tools): …`, `fix: …`). No secrets, tokens, personal paths, or build output. Generic shop names only.
 - **Title:** `<type>: <summary>`, **no issue or PR number** (GitHub adds `(#PR)` on squash).
-- **Body:** `Closes #N`, a summary, the acceptance criteria as a checklist, and a **How to verify** section (setup, commands with results, numbered App/UI steps each with Expected, not-testable-yet).
-- **Draft** until the How to verify steps pass; then mark "ready for review" (that starts Hangar Tester's review).
+- **Body:** `Closes #N`, a summary, the acceptance criteria as a checklist, and a **How to verify** section (setup and commands each with an Expected result and its actual result; numbered App/UI steps each with Expected; post-merge / not-yet-testable checks only under **Not testable yet**).
+- **Draft** until the numbered How to verify steps pass; then mark "ready for review" (that starts Hangar Tester's review). **Not testable yet** items (e.g. post-merge checks) don't keep it in draft.
 - **Review fixes in new commits only:** no amend, rebase or force-push. Reply on each thread starting with `**[Claude Code]**`, with the change and the commit SHA.
 - Live database migrations only after Canaan's OK; PGlite is fine for tests. Ask Canaan before adding any dependency.
 - No agent adds `canaan-approved` or merges.
@@ -76,8 +76,8 @@ Work on GitHub issue #<N> in caw1517/HangarShopApp.
 2. Port the v5.1 prototype 1:1 (same shell, index.css tokens, Untitled UI components) from the v5.1 prototype seed (ask me for a copy). If a copy exists in this repo, use that; otherwise stop and ask me for it. Don't invent placeholder UI.
 3. Post a plan first as a comment on the issue, tagged [Claude Code]: files to create or change, steps, how you'll verify, and a size estimate. No code yet. Wait for my OK. If it's too big for one evening, propose a split instead.
 4. After I OK it: branch `<type>/<N>-<slug>` from an up-to-date main, implement with small Conventional Commits, and add tests. Don't apply any migration to a live Supabase project; use PGlite for DB tests. Ask before adding dependencies.
-5. Run `npm test`, `npx tsc --noEmit` and `npm run build` and fix anything that fails.
-6. Write the PR body: `Closes #<N>`, summary, acceptance criteria checklist, and a How to verify section (setup, commands with expected results, numbered App/UI steps each with Expected, anything not testable yet).
+5. Run `npm test`, `npx tsc --noEmit` and `npm run build`, plus `npm run lint` if a lint script exists, and fix anything that fails.
+6. Write the PR body: `Closes #<N>`, summary, acceptance criteria checklist, and a How to verify section (setup and commands each with expected results, numbered App/UI steps each with Expected; post-merge checks only under "Not testable yet").
 7. Open the PR as a draft with title `<type>: <summary>` (no number). Run the verify steps you can; tell me when it's ready for me to mark "ready for review".
 Review fixes later go in new commits only (no amend/rebase/force-push); reply on each thread starting with **[Claude Code]** and the commit SHA. Never add labels or merge.
 ```
