@@ -75,38 +75,38 @@ const CONTENT: Record<PreviewSection, SectionContent> = {
 export function PreviewWorkspace({ section, onBack }: { section: PreviewSection; onBack: () => void }) {
   const content = CONTENT[section];
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-[#f9fafb]">
-      <div className="flex h-11 shrink-0 items-center justify-between border-b border-[#e4e7ec] bg-white px-5">
+    <div className="flex min-h-0 flex-1 flex-col bg-slate-50">
+      <div className="flex h-11 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5">
         <div className="flex items-baseline gap-2.5">
-          <span className="text-sm font-semibold text-[#101828]">{content.title}</span>
-          <span className="hidden text-xs text-[#64748b] sm:inline">{content.subtitle}</span>
+          <span className="text-sm font-semibold text-slate-900">{content.title}</span>
+          <span className="hidden text-xs text-slate-600 sm:inline">{content.subtitle}</span>
         </div>
-        <button type="button" onClick={onBack} className="uui-btn-secondary inline-flex h-7 items-center gap-1.5 rounded-md px-3 text-xs font-medium">
-          <ArrowLeft className="h-3.5 w-3.5 text-[#667085]" />
+        <button type="button" onClick={onBack} className="uui-btn-secondary inline-flex h-7 items-center gap-1.5 rounded-sm px-3 text-xs font-medium">
+          <ArrowLeft className="h-3.5 w-3.5 text-slate-600" />
           Back to Administration
         </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-6">
-        <div className="mb-5 flex items-start justify-between gap-4 rounded-xl border border-[#e4e7ec] bg-white p-5 shadow-[0_1px_2px_rgba(10,13,18,0.04)]">
+        <div className="mb-5 flex items-start justify-between gap-4 border border-slate-200 bg-white p-5">
           <div className="max-w-2xl">
-            <h2 className="text-base font-semibold text-[#101828]">{content.title}</h2>
-            <p className="mt-1.5 text-sm text-[#475467]">{content.blurb}</p>
+            <h2 className="text-base font-semibold text-slate-900">{content.title}</h2>
+            <p className="mt-1.5 text-sm text-slate-600">{content.blurb}</p>
           </div>
           <StatusPill label="Coming soon" color="gray" />
         </div>
 
-        <div className="rounded-xl border border-[#e4e7ec] bg-white p-5 shadow-[0_1px_2px_rgba(10,13,18,0.04)]">
-          <p className="text-xs font-medium text-[#667085]">What this module will track</p>
+        <div className="border border-slate-200 bg-white p-5">
+          <p className="text-xs font-medium text-slate-600">What this module will track</p>
           <ul className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
             {content.willTrack.map((item) => (
-              <li key={item} className="flex items-center gap-2 text-sm text-[#344054]">
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#d0d5dd]" aria-hidden />
+              <li key={item} className="flex items-center gap-2 text-sm text-slate-700">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-slate-400" aria-hidden />
                 {item}
               </li>
             ))}
           </ul>
-          <p className="mt-4 text-xs text-[#667085]">No data is tracked here yet.</p>
+          <p className="mt-4 text-xs text-slate-600">No data is tracked here yet.</p>
         </div>
       </div>
     </div>

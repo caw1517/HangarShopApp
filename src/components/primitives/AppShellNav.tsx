@@ -240,7 +240,7 @@ function NavItem({
       )}
     >
       {/* 2px inset active indicator; the lighter accent ring step reads on the dark rail. */}
-      {active && <span className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-accent-ring" aria-hidden />}
+      {active && <span className="absolute inset-y-1.5 left-0 w-0.5 bg-accent-ring" aria-hidden />}
       <span className="flex items-center gap-2.5">
         <Icon className={clsx("h-4 w-4 shrink-0", active ? "text-white" : "text-slate-400")} />
         <span>{label}</span>
