@@ -246,11 +246,11 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
                   line1={headlineFor(entry)}
                   line2={
                     <>
-                      <span className="font-mono">AUD-{shortId(entry.id)}</span> · {entry.actor_name}
+                      <span className="font-mono num">AUD-{shortId(entry.id)}</span> · {entry.actor_name}
                     </>
                   }
                   pill={<StatusPill label={pill.label} color={pill.color} />}
-                  subLabel={entry.created_at.slice(0, 10)}
+                  subLabel={<span className="num">{entry.created_at.slice(0, 10)}</span>}
                 />
               );
             })}
@@ -285,7 +285,7 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
                     <span>·</span>
                     <span>{selected.actor_name ?? "System"}</span>
                     <span>·</span>
-                    <span>{formatInTimeZone(selected.created_at, timezone)}</span>
+                    <span className="num">{formatInTimeZone(selected.created_at, timezone)}</span>
                   </>
                 }
                 pill={<StatusPill label={actionPill(selected.action).label} color={actionPill(selected.action).color} />}
@@ -336,7 +336,7 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
               <DetailFooter
                 left={
                   <>
-                    <div className="text-xs tabular-nums text-slate-600">Recorded {formatInTimeZone(selected.created_at, timezone)} · entry is permanent</div>
+                    <div className="text-xs text-slate-600">Recorded <span className="num">{formatInTimeZone(selected.created_at, timezone)}</span> · entry is permanent</div>
                   </>
                 }
               >

@@ -273,7 +273,7 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
                   line1={member.full_name}
                   line2={
                     <>
-                      <span className="font-mono">#{member.certificate_number}</span> · {member.email}
+                      <span className="font-mono num">#{member.certificate_number}</span> · {member.email}
                     </>
                   }
                   pill={<StatusPill label={pill.label} color={pill.color} />}
@@ -376,7 +376,7 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
                     <span>·</span>
                     <span>{selected.email}</span>
                     <span>·</span>
-                    <span>Member since {shortDate(selected.created_at)}</span>
+                    <span>Member since <span className="num">{shortDate(selected.created_at)}</span></span>
                   </>
                 }
                 pill={<StatusPill label={statusPillFor(selected.status).label} color={statusPillFor(selected.status).color} />}
@@ -523,7 +523,7 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
               <DetailFooter
                 left={
                   <>
-                    <div className="text-xs tabular-nums text-slate-600">Last updated {shortDate(selected.updated_at)} · changes recorded to the audit log</div>
+                    <div className="text-xs text-slate-600">Last updated <span className="num">{shortDate(selected.updated_at)}</span> · changes recorded to the audit log</div>
                   </>
                 }
               >

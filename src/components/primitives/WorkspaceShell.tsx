@@ -224,7 +224,7 @@ export interface ListRowProps {
   line1: React.ReactNode;
   line2: React.ReactNode;
   pill: React.ReactNode;
-  subLabel?: string;
+  subLabel?: React.ReactNode;
   /** Overrides the leading square's hover tooltip (e.g. a neutral "Recorded"). */
   squareTitle?: string;
 }
@@ -244,11 +244,11 @@ export function ListRow({ selected, onClick, state, line1, line2, pill, subLabel
       </div>
       <div className="min-w-0 flex-1">
         <div className={clsx("truncate text-[13.5px] text-slate-900", selected ? "font-semibold" : "font-medium")}>{line1}</div>
-        <div className="mt-0.5 truncate text-xs tabular-nums text-slate-600">{line2}</div>
+        <div className="mt-0.5 truncate text-xs text-slate-600">{line2}</div>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1">
         {pill}
-        {subLabel && <span className="text-[11px] tabular-nums text-slate-600">{subLabel}</span>}
+        {subLabel && <span className="text-[11px] text-slate-600">{subLabel}</span>}
       </div>
     </button>
   );
@@ -289,7 +289,7 @@ export function DetailHeaderBlock({
       </div>
       <div className="min-w-0 flex-1 space-y-1">
         <h2 className="text-lg font-semibold leading-snug text-slate-900">{title}</h2>
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs tabular-nums text-slate-600">{meta}</div>
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-600">{meta}</div>
       </div>
       {pill && <div className="shrink-0">{pill}</div>}
     </div>

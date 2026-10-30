@@ -335,8 +335,12 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
           <DetailFooter
             left={
               <>
-                <div className="text-xs tabular-nums text-slate-600">
-                  {org ? `Last updated ${org.updated_at.slice(0, 10)} · changes recorded to the audit log` : "Read-only"}
+                <div className="text-xs text-slate-600">
+                  {org ? (
+                    <>Last updated <span className="num">{org.updated_at.slice(0, 10)}</span> · changes recorded to the audit log</>
+                  ) : (
+                    "Read-only"
+                  )}
                 </div>
               </>
             }
