@@ -261,7 +261,7 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
                 />
               );
             })}
-            {visibleSections.length === 0 && <p className="px-4 py-6 text-sm text-[#667085]">No settings match this search.</p>}
+            {visibleSections.length === 0 && <p className="px-4 py-6 text-sm text-slate-600">No settings match this search.</p>}
           </ListScroll>
           </>
         }
@@ -271,17 +271,17 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
           <DetailTopBar
             breadcrumb={
               <>
-                Shop Configuration › <span className="font-medium text-[#101828]">{selected.label}</span>
+                Shop Configuration › <span className="font-medium text-slate-900">{selected.label}</span>
               </>
             }
             actions={<StatusPill label={pill.label} color={pill.color} />}
           />
           <DetailHeaderBlock
-            icon={<selected.icon className="h-5 w-5 text-gray-700" />}
+            icon={<selected.icon className="h-5 w-5 text-slate-700" />}
             title={selected.label}
             meta={
               <>
-                <span className="font-medium text-[#344054]">{shopShort}</span>
+                <span className="font-medium text-slate-700">{shopShort}</span>
                 <span>·</span>
                 <span>{selected.category}</span>
                 <span>·</span>
@@ -305,8 +305,8 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
             {banner && (selected.key === "thresholds" || selected.key === "digest") && (
               <div
                 className={clsx(
-                  "rounded-lg px-3.5 py-2.5 text-sm ring-1 ring-inset",
-                  banner.kind === "error" ? "bg-[#fef3f2] text-[#b42318] ring-[#fecdca]" : "bg-[#ecfdf3] text-[#067647] ring-[#abefc6]",
+                  "rounded-sm px-3.5 py-2.5 text-sm ring-1 ring-inset",
+                  banner.kind === "error" ? "bg-error-tint text-error ring-error/25" : "bg-success-tint text-success ring-success/25",
                 )}
               >
                 {banner.text}
@@ -315,7 +315,7 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
 
             {(selected.key === "thresholds" || selected.key === "digest") &&
               (accessDenied || !org || !form ? (
-                <p className="text-sm text-[#667085]">You are not an active Member of the selected Shop, so Shop settings are read-only here.</p>
+                <p className="text-sm text-slate-600">You are not an active Member of the selected Shop, so Shop settings are read-only here.</p>
               ) : (
                 <ShopSettingsForm
                   form={form}
@@ -335,10 +335,10 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
           <DetailFooter
             left={
               <>
-                <div className="text-xs tabular-nums text-gray-500">
+                <div className="text-xs tabular-nums text-slate-600">
                   {org ? `Last updated ${org.updated_at.slice(0, 10)} · changes recorded to the audit log` : "Read-only"}
                 </div>
-                <div className="text-[11px] text-gray-400">J / K to navigate · ↵ save</div>
+                <div className="text-[11px] text-slate-500">J / K to navigate · ↵ save</div>
               </>
             }
           >
@@ -346,7 +346,7 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
               type="button"
               disabled={!canConfigure || selected.key === "provisioning" || selected.key === "rls" || !formDirty || !!validationError}
               onClick={handleSave}
-              className="uui-btn-primary h-9 rounded-md px-3.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50"
+              className="uui-btn-primary h-9 rounded-sm px-3.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50"
             >
               Save Shop settings
             </button>
@@ -384,7 +384,7 @@ function ShopSettingsForm({
                 value={form.timezone}
                 disabled={!canConfigure}
                 onChange={(e) => setForm((prev) => ({ ...prev, timezone: e.target.value }))}
-                className="w-full rounded-lg border border-[#d0d5dd] bg-white px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef] disabled:bg-[#f9fafb]"
+                className="w-full rounded-sm border border-slate-500 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-ring disabled:bg-slate-100"
               >
                 {TIMEZONES.map((tz) => (
                   <option key={tz} value={tz}>
@@ -402,7 +402,7 @@ function ShopSettingsForm({
                 value={form.toolIdPrefix}
                 disabled={!canConfigure}
                 onChange={(e) => setForm((prev) => ({ ...prev, toolIdPrefix: e.target.value }))}
-                className="w-full rounded-lg border border-[#d0d5dd] px-3 py-2 font-mono text-sm tabular-nums shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef] disabled:bg-[#f9fafb]"
+                className="w-full rounded-sm border border-slate-500 px-3 py-2 font-mono text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-accent-ring disabled:bg-slate-100"
               />
             )}
           </Field>
@@ -432,7 +432,7 @@ function ShopSettingsForm({
                   value={form.weeklyDigestDay}
                   disabled={!canConfigure}
                   onChange={(e) => setForm((prev) => ({ ...prev, weeklyDigestDay: Number(e.target.value) }))}
-                  className="flex-1 rounded-lg border border-[#d0d5dd] bg-white px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef] disabled:bg-[#f9fafb]"
+                  className="flex-1 rounded-sm border border-slate-500 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-ring disabled:bg-slate-100"
                 >
                   {WEEKDAYS.map((day, idx) => (
                     <option key={day} value={idx}>
@@ -462,7 +462,7 @@ function ShopSettingsForm({
             disabled={!canConfigure}
             onChange={(e) => setReason(e.target.value)}
             placeholder="e.g. Aligning due-soon window with insurer requirement"
-            className="w-full rounded-lg border border-[#d0d5dd] px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef] disabled:bg-[#f9fafb]"
+            className="w-full rounded-sm border border-slate-500 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-ring disabled:bg-slate-100"
           />
         )}
       </Field>
@@ -507,16 +507,16 @@ function ProvisioningPanel({ isPlatformOwner }: { isPlatformOwner: boolean }) {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-[#667085]">
+      <p className="text-sm text-slate-600">
         Provisioning a new Shop creates its workspace and invites the initial Admin, without adding the Platform Owner to the new Shop's
         roster. The Platform Owner cannot view the new Shop's team, settings, or history unless its Admin invites them.
       </p>
       {!isPlatformOwner && (
-        <div className="rounded-lg bg-[#fffaeb] px-3.5 py-2.5 text-sm text-[#93370d] ring-1 ring-inset ring-[#fedf89]">
+        <div className="rounded-sm bg-warning-tint px-3.5 py-2.5 text-sm text-warning ring-1 ring-inset ring-warning/25">
           Only a Platform Owner can provision a new Shop.
         </div>
       )}
-      {error && <div className="rounded-lg bg-[#fef3f2] px-3.5 py-2.5 text-sm text-[#b42318] ring-1 ring-inset ring-[#fecdca]">{error}</div>}
+      {error && <div className="rounded-sm bg-error-tint px-3.5 py-2.5 text-sm text-error ring-1 ring-inset ring-error/25">{error}</div>}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Shop name">
@@ -537,24 +537,24 @@ function ProvisioningPanel({ isPlatformOwner }: { isPlatformOwner: boolean }) {
         type="button"
         disabled={!isPlatformOwner || !shopName.trim() || !slug.trim() || !adminFullName.trim() || !adminEmail.trim()}
         onClick={handleProvision}
-        className="uui-btn-primary rounded-lg px-3.5 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+        className="uui-btn-primary rounded-sm px-3.5 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
       >
         Provision Shop
       </button>
 
       {receipt && (
-        <div className="rounded-lg bg-white p-4 shadow-xs ring-1 ring-inset ring-[#e4e7ec]">
-          <p className="text-sm font-semibold text-[#101828]">Provisioning receipt</p>
+        <div className="rounded-sm bg-white p-4 ring-1 ring-inset ring-slate-200">
+          <p className="text-sm font-semibold text-slate-900">Provisioning receipt</p>
           <dl className="mt-2 space-y-1 text-sm">
             <ReceiptRow label="Shop reference" value={<span className="font-mono tabular-nums">{receipt.org_id}</span>} />
             <ReceiptRow label="Shop name" value={receipt.shop_name} />
             <ReceiptRow label="Initial Admin" value={receipt.initial_admin_email} />
             <ReceiptRow label="Invite status" value={<StatusPill label="Invited" color="blue" />} />
           </dl>
-          <button type="button" onClick={handleVerifyZeroAccess} className="uui-btn-secondary mt-3 rounded-lg px-3 py-2 text-sm font-medium">
+          <button type="button" onClick={handleVerifyZeroAccess} className="uui-btn-secondary mt-3 rounded-sm px-3 py-2 text-sm font-medium">
             Verify zero read access
           </button>
-          {verifyResult && <p className="mt-2 text-sm text-[#344054]">{verifyResult}</p>}
+          {verifyResult && <p className="mt-2 text-sm text-slate-700">{verifyResult}</p>}
         </div>
       )}
     </div>
@@ -570,22 +570,22 @@ function RlsMatrixPanel() {
   ];
   return (
     <div>
-      <p className="inline-flex items-center gap-1.5 text-sm font-medium text-[#101828]">
-        <ShieldCheck className="h-4 w-4 text-[#17b26a]" />
+      <p className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-900">
+        <ShieldCheck className="h-4 w-4 text-success-dot" />
         Every Shop's data is fully isolated from every other Shop
       </p>
-      <p className="mt-1 text-sm text-[#667085]">This matrix shows who can view and who can change each area within a Shop.</p>
-      <div className="mt-4 overflow-hidden rounded-xl bg-white shadow-xs ring-1 ring-inset ring-[#e4e7ec]">
-        <div className="grid grid-cols-3 gap-3 bg-[#f9fafb]/70 px-4 py-2.5 text-xs font-medium text-[#667085]">
+      <p className="mt-1 text-sm text-slate-600">This matrix shows who can view and who can change each area within a Shop.</p>
+      <div className="mt-4 overflow-hidden bg-white ring-1 ring-inset ring-slate-200">
+        <div className="grid grid-cols-3 gap-3 bg-slate-50/70 px-4 py-2.5 text-xs font-medium text-slate-600">
           <span>Area</span>
           <span>Who can view</span>
           <span>Who can change</span>
         </div>
         {rows.map((row) => (
-          <div key={row.area} className="grid grid-cols-3 gap-3 border-t border-[#e4e7ec] px-4 py-3 text-sm">
-            <span className="font-medium text-[#101828]">{row.area}</span>
-            <span className="text-[#344054]">{row.view}</span>
-            <span className="text-[#344054]">{row.change}</span>
+          <div key={row.area} className="grid grid-cols-3 gap-3 border-t border-slate-200 px-4 py-3 text-sm">
+            <span className="font-medium text-slate-900">{row.area}</span>
+            <span className="text-slate-700">{row.view}</span>
+            <span className="text-slate-700">{row.change}</span>
           </div>
         ))}
       </div>
@@ -597,7 +597,7 @@ function Field({ label, children }: { label: string; children: (id: string) => R
   const id = useId();
   return (
     <div>
-      <label htmlFor={id} className="mb-1 block text-sm font-medium text-[#344054]">
+      <label htmlFor={id} className="mb-1 block text-sm font-medium text-slate-700">
         {label}
       </label>
       {children(id)}
@@ -635,7 +635,7 @@ function NumberInput({
       disabled={disabled}
       onChange={(e) => onChange(Number(e.target.value))}
       className={clsx(
-        "rounded-lg border border-[#d0d5dd] px-3 py-2 text-sm tabular-nums shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef] disabled:bg-[#f9fafb]",
+        "rounded-sm border border-slate-500 px-3 py-2 text-sm tabular-nums focus:outline-none focus:ring-2 focus:ring-accent-ring disabled:bg-slate-100",
         className ?? "w-full",
       )}
     />
@@ -668,7 +668,7 @@ function TextInput({
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
       className={clsx(
-        "w-full rounded-lg border border-[#d0d5dd] px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef] disabled:bg-[#f9fafb]",
+        "w-full rounded-sm border border-slate-500 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-ring disabled:bg-slate-100",
         mono && "font-mono tabular-nums",
       )}
     />
@@ -678,8 +678,8 @@ function TextInput({
 function ReceiptRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <dt className="text-[#667085]">{label}</dt>
-      <dd className="text-[#101828]">{value}</dd>
+      <dt className="text-slate-600">{label}</dt>
+      <dd className="text-slate-900">{value}</dd>
     </div>
   );
 }
