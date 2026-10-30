@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* DESIGN.md v5.1 — Untitled UI React v8 token foundation */
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    /* Skeuomorphic & elevation shadows */
+    --shadow-2xs: 0px 1px 2px rgba(10, 13, 18, 0.04);
+    --shadow-xs: 0px 1px 2px rgba(10, 13, 18, 0.05);
+    --shadow-sm: 0px 1px 3px rgba(10, 13, 18, 0.08), 0px 1px 2px -1px rgba(10, 13, 18, 0.08);
+    --shadow-skeuomorphic: 0px 0px 0px 1px rgba(10, 13, 18, 0.18) inset, 0px -2px 0px 0px rgba(10, 13, 18, 0.05) inset;
+    --shadow-xs-skeuomorphic: var(--shadow-skeuomorphic), var(--shadow-xs);
+
+    /* shadcn-style theme variables mapped to the Untitled UI gray + brand-blue scale */
+    --background: 210 20% 98%;       /* #f9fafb canvas */
+    --foreground: 220 43% 11%;       /* #101828 primary ink */
+    --card: 0 0% 100%;               /* #ffffff surface */
+    --card-foreground: 220 43% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 43% 11%;
+    --primary: 220 87% 51%;          /* #155eef brand */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;        /* #f2f4f7 */
+    --secondary-foreground: 220 43% 11%;
+    --muted: 220 14% 96%;            /* #f2f4f7 */
+    --muted-foreground: 215 16% 47%; /* #667085 muted ink */
+    --accent: 220 14% 96%;
+    --accent-foreground: 220 43% 11%;
+    --destructive: 4 74% 49%;        /* #d92d20 */
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;           /* #e4e7ec hairline */
+    --input: 216 12% 84%;            /* #d0d5dd input border */
+    --ring: 220 87% 51%;
+    --radius: 0.5rem;
+
+    /* Dark left nav rail (#0c111d) */
+    --sidebar-background: 222 42% 8%;
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-primary: 220 87% 51%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 33% 15%;   /* #1f242f active nav item */
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 217 33% 15%;
+    --sidebar-ring: 220 87% 51%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
+  }
+
+  h1, h2, h3, h4 {
+    font-weight: 600;
+    letter-spacing: -0.015em;
+  }
+}
+
+@layer components {
+  .uui-btn-primary {
+    background-color: #155eef;
+    color: #ffffff;
+    box-shadow: var(--shadow-xs-skeuomorphic);
+  }
+  .uui-btn-primary:hover {
+    background-color: #004eeb;
+  }
+  .uui-btn-primary:disabled {
+    background-color: #d0d5dd;
+    color: #ffffff;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .uui-btn-secondary {
+    background-color: #ffffff;
+    color: #344054;
+    box-shadow: var(--shadow-xs-skeuomorphic);
+    border: 1px solid #d0d5dd;
+  }
+  .uui-btn-secondary:hover {
+    background-color: #f9fafb;
+    color: #182230;
+  }
+  .uui-btn-secondary:disabled {
+    color: #98a2b3;
+    cursor: not-allowed;
+  }
+
+  .uui-font-id {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
