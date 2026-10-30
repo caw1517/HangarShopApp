@@ -336,10 +336,10 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
               <DetailFooter
                 left={
                   <>
-                    <div className="text-xs tabular-nums text-slate-600">Recorded {formatInTimeZone(selected.created_at, timezone)} · entry is permanent</div>
+                    <div className="text-xs tabular-nums text-slate-600">Recorded {formatInTimeZone(selected.created_at, timezone)} · entry is permanent</div>
                   </>
                 }
-              >
+              >
               </DetailFooter>
             </>
           )}
