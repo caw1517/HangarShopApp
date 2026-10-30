@@ -1,6 +1,6 @@
 # HangarShopApp
 
-Read and follow `AGENTS.md` (ground rules), `CONTEXT.md` (domain glossary), `DESIGN.md` (Asset Panda + MaintainX design system with InvenTree location/lot hierarchy & the 6 anti-vibe-coding guardrails), and `docs/adr/` before any work. Skills are in `.claude/skills`.
+Read and follow `AGENTS.md` (ground rules), `CONTEXT.md` (domain glossary), `DESIGN.md` (v6 Ops Navy design system: tokens, type, color, shape, screen shapes and the anti-vibe-coding guardrails, with MaintainX, Asset Panda and InvenTree as layout references), and `docs/adr/` before any work. Skills are in `.claude/skills`.
 
 This file is the Claude Code playbook for Canaan's coding sessions: how a ticket goes from issue to PR to merge. `AGENTS.md` ground rules still apply; where this file is more specific about the ticket, PR and review flow, follow this file.
 
@@ -23,9 +23,10 @@ Canaan picks an issue labeled `ready-for-agent` and hands it to you (for example
 5. **Too big?** One issue = one PR, one concern, about one evening of work (no hard line limit). If the plan is bigger or mixes concerns, stop and propose a split into sub-issues or stacked PRs. Create sub-issues with `gh issue create -R caw1517/HangarShopApp --template Ticket` (gh matches the front-matter **name** `Ticket`, not the filename `ticket.md`) **only after Canaan agrees**. If the work grows mid-way, pause and tell him.
 6. On "implement": branch, build in small commits, verify, and open the PR (below).
 
-## Design and the v5.1 prototype
+## Design system
 
-- Every UI slice ports the approved **v5.1 prototype 1:1**: the same shell, `index.css` tokens and Untitled UI components, following `DESIGN.md` and its guardrails. Never invent generic placeholder chrome.
+- `DESIGN.md` (v6 Ops Navy) is the design source of truth for colors, fonts, radii, tokens, screen shapes and copy. Every UI slice follows it and its guardrails, and matches the approved mocks or layout named in the ticket. Never invent generic placeholder chrome.
+- The v5.1 prototype is a reference for layout and flow only, not for colors, fonts, radii or tokens.
 - Follow these anti-vibe-coding rules (not all are spelled out in `DESIGN.md`): no spec-speak or ticket/issue numbers in UI copy; demo/prototype controls only in the `Tweaks` pill (collapsed by default); flush split panes (no floating gaps or cards between panes); one status pill per row.
 - Use the **v5.1 prototype seed** copy in this repo if one exists; otherwise stop and ask Canaan for it.
 - All UI is responsive: phone, tablet and desktop.
@@ -64,7 +65,7 @@ Nothing merges until **both** approvals are in and the review is fully clear:
 
 - **Hangar Tester** (as `RealCawBot`) reviews code, the app, and every How to verify step. Blocking findings are inline threads; suggestions are in the review body. It resolves its own threads once each fix is verified, and adds `tester-approved` only when there are **zero open findings** (blocking threads **and** review-body suggestions/nits), after re-approving the current head; it re-adds the label after any later push so the label is newer than the push.
 - **Canaan** reviews last, adds `canaan-approved`, and **squash-merges**. Only Canaan adds that label.
-- Once #39 merges, its `approval-gate` check must pass: both labels (`tester-approved`, `canaan-approved`) present on the current commit. That gate **strips both labels on every push and on reopen**, so any new push means both approvals must be given again; if the automatic strip fails (a fork PR or an API error), Tester removes `tester-approved` and Canaan removes `canaan-approved` by hand. Until #39 merges, `main` has no approval gate (no `.github/workflows/`), so the two-label rule is followed by hand. The actor check (who added each label), the stale-approval check (labels older than the latest push) and the unresolved-thread check are **not part of #39's gate** — they are the planned 560XL upgrade tracked in #44, so don't assume the gate enforces open threads.
+- The `approval-gate` check from #39 is live and required by branch protection on `main`: both labels (`tester-approved`, `canaan-approved`) must be present on the current commit. That gate **strips both labels on every push and on reopen**, so any new push means both approvals must be given again; if the automatic strip fails (a fork PR or an API error), Tester removes `tester-approved` and Canaan removes `canaan-approved` by hand. The actor check (who added each label), the stale-approval check (labels older than the latest push) and the unresolved-thread check are **not part of #39's gate** — they are the planned 560XL upgrade tracked in #44, so don't assume the gate enforces open threads.
 
 **Claude Code never:** adds or removes labels, approves a PR, resolves review threads, merges (including `gh pr merge --admin`), pushes or force-pushes to `main`, or amends, rebases or force-pushes a PR branch.
 
@@ -134,4 +135,4 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 
 ### Domain & design docs
 
-Single-context: `CONTEXT.md` (domain glossary), `DESIGN.md` (Asset Panda + MaintainX UI & anti-vibe-coding contract), and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+Single-context: `CONTEXT.md` (domain glossary), `DESIGN.md` (v6 Ops Navy design system & anti-vibe-coding contract), and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
