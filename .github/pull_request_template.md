@@ -62,7 +62,7 @@ list them under "Not testable yet" instead, and those items do not keep the PR i
 
 ## Checklist
 
-- [ ] UI ports the v5.1 prototype 1:1 and follows `DESIGN.md` (or no UI change)
+- [ ] UI follows `DESIGN.md` and matches the approved mocks or layout for the ticket (or no UI change)
 - [ ] No spec-speak or ticket/issue numbers in UI copy; demo controls only in the `Tweaks` pill (collapsed by default)
 - [ ] Flush split panes (no floating gaps or cards between panes); one status pill per row
 - [ ] RLS on new tables; no edits to applied migrations
@@ -77,7 +77,7 @@ list them under "Not testable yet" instead, and those items do not keep the PR i
 
 1. Mark the PR "ready for review" once the verify steps pass (drafts are ignored).
 2. Hangar Tester (`RealCawBot`) reviews; Request changes starts the fix loop (Hangar Dev's automatic **[Claude Code]** run, max 3 rounds, then "address review" by hand).
-3. Tester verifies each fix, resolves its threads, re-approves the current head, and adds `tester-approved` only when there are zero open findings (blocking threads **and** review-body suggestions/nits). Once #39 merges, its gate strips both labels on every push and on reopen, so both re-approve (until then `main` has no approval gate and the two-label rule is followed by hand); Tester re-adds `tester-approved` after any later push so the label is newer than the push.
+3. Tester verifies each fix, resolves its threads, re-approves the current head, and adds `tester-approved` only when there are zero open findings (blocking threads **and** review-body suggestions/nits). The `approval-gate` check strips both labels on every push and on reopen, so both re-approve; Tester re-adds `tester-approved` after any later push so the label is newer than the push.
 4. Canaan adds `canaan-approved` and squash-merges.
 
 Claude Code never adds or removes labels, approves, resolves threads, or merges. Only Canaan adds `canaan-approved` and squash-merges.

@@ -16,25 +16,25 @@ export function IdleTimeoutModal() {
   if (domain.idleState !== "warning" || domain.signedOut) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#101828]/40 px-4">
-      <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl ring-1 ring-inset ring-[#e4e7ec]">
-        <h2 className="text-base font-semibold text-[#101828]">Still there?</h2>
-        <p className="mt-2 text-sm text-[#344054]">
-          This Shop signs out idle sessions after {domain.idleMinutes} minutes. You&apos;ll be signed out shortly
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4">
+      <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-overlay ring-1 ring-inset ring-slate-200">
+        <h2 className="text-base font-semibold text-slate-900">Still there?</h2>
+        <p className="mt-2 text-sm text-slate-700">
+          This shop signs out idle sessions after {domain.idleMinutes} minutes. You&apos;ll be signed out shortly
           unless you stay active.
         </p>
         <div className="mt-5 flex justify-end gap-2.5">
           <button
             type="button"
             onClick={domain.idleReset}
-            className="uui-btn-secondary rounded-lg px-3.5 py-2 text-sm font-medium"
+            className="uui-btn-secondary min-h-11 px-3.5 py-2 text-sm font-medium"
           >
             Stay signed in
           </button>
           <button
             type="button"
             onClick={() => domain.signOut("manual")}
-            className="uui-btn-primary rounded-lg px-3.5 py-2 text-sm font-medium"
+            className="uui-btn-primary min-h-11 px-3.5 py-2 text-sm font-medium"
           >
             Sign out now
           </button>

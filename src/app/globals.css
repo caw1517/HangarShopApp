@@ -4,97 +4,89 @@
 
 @layer base {
   :root {
-    /* DESIGN.md v5.1 — Untitled UI React v8 token foundation */
-    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    /* DESIGN.md v6 Ops Navy. Components use these through Tailwind tokens, never hex literals. */
+    --font-sans: var(--font-public-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: var(--font-roboto-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
-    /* Skeuomorphic & elevation shadows */
-    --shadow-2xs: 0px 1px 2px rgba(10, 13, 18, 0.04);
-    --shadow-xs: 0px 1px 2px rgba(10, 13, 18, 0.05);
-    --shadow-sm: 0px 1px 3px rgba(10, 13, 18, 0.08), 0px 1px 2px -1px rgba(10, 13, 18, 0.08);
-    --shadow-skeuomorphic: 0px 0px 0px 1px rgba(10, 13, 18, 0.18) inset, 0px -2px 0px 0px rgba(10, 13, 18, 0.05) inset;
-    --shadow-xs-skeuomorphic: var(--shadow-skeuomorphic), var(--shadow-xs);
+    --slate-50: #F6F7F9;  --slate-100: #EDEFF2; --slate-200: #DFE2E7; --slate-300: #C6CBD3;
+    --slate-400: #9AA1AC; --slate-500: #6E7682; --slate-600: #545B66; --slate-700: #3E444D;
+    --slate-800: #2A2F36; --slate-900: #1B1F24; --slate-950: #111418;
 
-    /* shadcn-style theme variables mapped to the Untitled UI gray + brand-blue scale */
-    --background: 210 20% 98%;       /* #f9fafb canvas */
-    --foreground: 220 43% 11%;       /* #101828 primary ink */
-    --card: 0 0% 100%;               /* #ffffff surface */
-    --card-foreground: 220 43% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 43% 11%;
-    --primary: 220 87% 51%;          /* #155eef brand */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;        /* #f2f4f7 */
-    --secondary-foreground: 220 43% 11%;
-    --muted: 220 14% 96%;            /* #f2f4f7 */
-    --muted-foreground: 215 16% 47%; /* #667085 muted ink */
-    --accent: 220 14% 96%;
-    --accent-foreground: 220 43% 11%;
-    --destructive: 4 74% 49%;        /* #d92d20 */
-    --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 91%;           /* #e4e7ec hairline */
-    --input: 216 12% 84%;            /* #d0d5dd input border */
-    --ring: 220 87% 51%;
-    --radius: 0.5rem;
+    --accent: #1F4E8C; --accent-hover: #173D6E; --accent-tint: #E8EEF6; --accent-ring: #5B82BF;
 
-    /* Dark left nav rail (#0c111d) */
-    --sidebar-background: 222 42% 8%;
-    --sidebar-foreground: 210 20% 98%;
-    --sidebar-primary: 220 87% 51%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 217 33% 15%;   /* #1f242f active nav item */
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 217 33% 15%;
-    --sidebar-ring: 220 87% 51%;
+    --success: #1E6B43; --success-tint: #E7F2EB; --success-dot: #2E9E62;
+    --warning: #8A5300; --warning-tint: #FBF0DB; --warning-dot: #D98E04;
+    --error:   #A8261B; --error-tint:   #FBEAE8; --error-dot:   #D93D2E;
+    --info:    #1F4E8C; --info-tint:    #E8EEF6; --info-dot:    #1F4E8C;
+
+    --radius-xs: 2px; --radius-sm: 4px; --radius-md: 5px; --radius-lg: 8px;
+    --shadow-overlay: 0 4px 12px rgba(17, 20, 24, 0.12);
   }
 
   * {
-    @apply border-border;
+    border-color: var(--slate-200);
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
-    font-variant-numeric: tabular-nums;
+    color: var(--slate-900);
+    background: var(--slate-50);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* No font-variant-numeric here: it widens hyphens in prose. Use .num on numeric cells. */
   }
 
   h1, h2, h3, h4 {
     font-weight: 600;
-    letter-spacing: -0.015em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent-ring);
+    outline-offset: 2px;
   }
 }
 
 @layer components {
+  /* Flat buttons: 1px border, no inset shadow (DESIGN.md §4). */
   .uui-btn-primary {
-    background-color: #155eef;
-    color: #ffffff;
-    box-shadow: var(--shadow-xs-skeuomorphic);
+    background-color: var(--accent);
+    color: #fff;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-sm);
   }
   .uui-btn-primary:hover {
-    background-color: #004eeb;
+    background-color: var(--accent-hover);
+    border-color: var(--accent-hover);
   }
   .uui-btn-primary:disabled {
-    background-color: #d0d5dd;
-    color: #ffffff;
-    box-shadow: none;
+    background-color: var(--slate-100);
+    border-color: var(--slate-100);
+    color: var(--slate-600);
     cursor: not-allowed;
   }
 
   .uui-btn-secondary {
-    background-color: #ffffff;
-    color: #344054;
-    box-shadow: var(--shadow-xs-skeuomorphic);
-    border: 1px solid #d0d5dd;
+    background-color: #fff;
+    color: var(--slate-800);
+    border: 1px solid var(--slate-300);
+    border-radius: var(--radius-sm);
   }
   .uui-btn-secondary:hover {
-    background-color: #f9fafb;
-    color: #182230;
+    background-color: var(--slate-50);
+    color: var(--slate-900);
   }
   .uui-btn-secondary:disabled {
-    color: #98a2b3;
+    color: var(--slate-600);
+    background-color: var(--slate-100);
     cursor: not-allowed;
   }
+}
 
+@layer utilities {
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+  .font-id,
   .uui-font-id {
     font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;

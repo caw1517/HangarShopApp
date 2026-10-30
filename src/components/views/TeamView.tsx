@@ -213,7 +213,7 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
     return (
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {header}
-        <AccessDeniedPanel message="You are not an active Member of the selected Shop, so Team & Roles data is not visible. Each Shop's roster stays fully isolated from every other Shop." />
+        <AccessDeniedPanel message="You are not an active Member of the selected Shop, so its team list isn't shown. Ask one of its Admins for an invite." />
       </div>
     );
   }
@@ -273,7 +273,7 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
                   line1={member.full_name}
                   line2={
                     <>
-                      <span className="font-mono">#{member.certificate_number}</span> · {member.email}
+                      <span className="font-mono num">#{member.certificate_number}</span> · {member.email}
                     </>
                   }
                   pill={<StatusPill label={pill.label} color={pill.color} />}
@@ -281,7 +281,7 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
                 />
               );
             })}
-            {filtered.length === 0 && <p className="px-4 py-6 text-sm text-[#667085]">No members match this filter.</p>}
+            {filtered.length === 0 && <p className="px-4 py-6 text-sm text-slate-600">No members match this filter.</p>}
           </ListScroll>
           </>
         }
@@ -333,7 +333,7 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
               message={message}
             />
           ) : !selected ? (
-            <div className="flex h-full items-center justify-center p-10 text-sm text-[#667085]">
+            <div className="flex h-full items-center justify-center p-10 text-sm text-slate-600">
               Select a member to view their role, designations, and activity.
             </div>
           ) : (
@@ -342,11 +342,11 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
               <DetailTopBar
                 breadcrumb={
                   <>
-                    {shopShort} Roster › <span className="font-medium text-[#101828]">{selected.full_name}</span>
+                    {shopShort} Roster › <span className="font-medium text-slate-900">{selected.full_name}</span>
                   </>
                 }
                 actions={
-                  <div className="flex items-center gap-1 rounded-lg bg-[#f2f4f7] p-0.5">
+                  <div className="flex items-center gap-1 rounded-sm bg-white p-0.5 ring-1 ring-inset ring-slate-500">
                     {([
                       ["role", "Role & Designations"],
                       ["activity", "Activity"],
@@ -356,8 +356,8 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
                         type="button"
                         onClick={() => setMemberTab(key)}
                         className={clsx(
-                          "rounded-md px-2.5 py-1 text-xs font-medium transition",
-                          memberTab === key ? "bg-white text-[#101828] shadow-2xs" : "text-[#64748b] hover:text-[#101828]",
+                          "rounded-sm px-2.5 py-1 text-xs font-medium transition",
+                          memberTab === key ? "bg-accent-tint text-accent" : "text-slate-600 hover:text-slate-900",
                         )}
                       >
                         {label}
@@ -369,14 +369,15 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
 
               <DetailHeaderBlock
                 icon={initials(selected.full_name)}
+                avatar
                 title={selected.full_name}
                 meta={
                   <>
-                    <span className="font-medium text-[#344054]">{titleCaseRole(selected.role)}</span>
+                    <span className="font-medium text-slate-700">{titleCaseRole(selected.role)}</span>
                     <span>·</span>
                     <span>{selected.email}</span>
                     <span>·</span>
-                    <span>Member since {shortDate(selected.created_at)}</span>
+                    <span>Member since <span className="num">{shortDate(selected.created_at)}</span></span>
                   </>
                 }
                 pill={<StatusPill label={statusPillFor(selected.status).label} color={statusPillFor(selected.status).color} />}
@@ -400,8 +401,8 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
                 {message && (
                   <div
                     className={clsx(
-                      "rounded-lg px-3.5 py-2.5 text-sm ring-1 ring-inset",
-                      message.kind === "error" ? "bg-[#fef3f2] text-[#b42318] ring-[#fecdca]" : "bg-[#ecfdf3] text-[#067647] ring-[#abefc6]",
+                      "rounded-sm px-3.5 py-2.5 text-sm ring-1 ring-inset",
+                      message.kind === "error" ? "bg-error-tint text-error ring-error/25" : "bg-success-tint text-success ring-success/25",
                     )}
                   >
                     {message.text}
@@ -413,14 +414,14 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
                 ) : (
                   <>
                     {isSelectedLastActiveAdmin && (
-                      <div className="rounded-lg bg-[#fffaeb] px-3.5 py-2.5 text-sm text-[#93370d] ring-1 ring-inset ring-[#fedf89]">
+                      <div className="rounded-sm bg-warning-tint px-3.5 py-2.5 text-sm text-warning ring-1 ring-inset ring-warning/25">
                         {selected.full_name} is the only active Admin in this Shop. Demoting or deactivating them is blocked until a
                         second active Admin exists.
                       </div>
                     )}
 
                     <div>
-                      <p className="mb-2 text-sm font-medium text-[#344054]">Role</p>
+                      <p className="mb-2 text-sm font-medium text-slate-700">Role</p>
                       <div className="grid gap-2 sm:grid-cols-3">
                         {ROLE_OPTIONS.map((opt) => {
                           const chosen = draftRole === opt.value;
@@ -431,17 +432,17 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
                               disabled={!canManage}
                               onClick={() => setDraftRole(opt.value)}
                               className={clsx(
-                                "rounded-lg px-3 py-2.5 text-left text-sm shadow-xs ring-1 ring-inset transition disabled:cursor-not-allowed disabled:opacity-60",
+                                "rounded-sm px-3 py-2.5 text-left text-sm ring-1 ring-inset transition disabled:cursor-not-allowed disabled:opacity-60",
                                 chosen
-                                  ? "bg-blue-50/30 text-gray-900 ring-2 ring-inset ring-blue-600"
-                                  : "bg-white text-[#344054] ring-[#d0d5dd] hover:bg-[#f9fafb]",
+                                  ? "bg-accent-tint/40 text-slate-900 ring-2 ring-inset ring-accent"
+                                  : "bg-white text-slate-700 ring-slate-500 hover:bg-slate-50",
                               )}
                             >
                               <span className="flex items-center gap-1.5 font-medium">
-                                {chosen && <span className="h-1.5 w-1.5 rounded-full bg-[#155eef]" aria-hidden />}
+                                {chosen && <span className="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden />}
                                 {opt.label}
                               </span>
-                              <span className="mt-0.5 block text-xs text-[#667085]">{opt.description}</span>
+                              <span className="mt-0.5 block text-xs text-slate-600">{opt.description}</span>
                             </button>
                           );
                         })}
@@ -449,7 +450,7 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
                     </div>
 
                     <div>
-                      <p className="mb-2 text-sm font-medium text-[#344054]">Compliance designations</p>
+                      <p className="mb-2 text-sm font-medium text-slate-700">Compliance designations</p>
                       <div className="space-y-2">
                         <DesignationToggle
                           checked={draftCal}
@@ -469,7 +470,7 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
                     </div>
 
                     <div>
-                      <label htmlFor={reasonId} className="mb-1 block text-sm font-medium text-[#344054]">Reason (recorded to audit log)</label>
+                      <label htmlFor={reasonId} className="mb-1 block text-sm font-medium text-slate-700">Reason (recorded to audit log)</label>
                       <input
                         id={reasonId}
                         type="text"
@@ -477,14 +478,14 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
                         onChange={(e) => setReason(e.target.value)}
                         placeholder="e.g. Promoted after completing cal-designee training"
                         disabled={!canManage}
-                        className="w-full rounded-lg border border-[#d0d5dd] px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef] disabled:bg-[#f9fafb]"
+                        className="w-full rounded-sm border border-slate-500 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-ring disabled:bg-slate-100"
                       />
                     </div>
 
                     {selected.status !== "deactivated" && (
-                      <div className="rounded-lg bg-white p-4 shadow-xs ring-1 ring-inset ring-[#fecdca]">
-                        <p className="text-sm font-medium text-[#101828]">Deactivate member</p>
-                        <p className="mt-1 text-xs text-[#667085]">
+                      <div className="rounded-sm bg-white p-4 ring-1 ring-inset ring-error/25">
+                        <p className="text-sm font-medium text-slate-900">Deactivate member</p>
+                        <p className="mt-1 text-xs text-slate-600">
                           Deactivating a team member revokes access immediately while preserving their historical compliance and
                           sign-off records.
                         </p>
@@ -498,7 +499,7 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
                           onChange={(e) => setDeactivateReason(e.target.value)}
                           placeholder="Reason for deactivation (required)"
                           disabled={!canManage}
-                          className="mt-2 w-full rounded-lg border border-[#d0d5dd] px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef] disabled:bg-[#f9fafb]"
+                          className="mt-2 w-full rounded-sm border border-slate-500 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-ring disabled:bg-slate-100"
                         />
                         <button
                           type="button"
@@ -509,7 +510,7 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
                               setDeactivateReason("");
                             }, `${selected.full_name} deactivated. Historical records preserved.`)
                           }
-                          className="mt-3 rounded-lg bg-[#d92d20] px-3.5 py-2 text-sm font-medium text-white shadow-xs-skeuomorphic disabled:cursor-not-allowed disabled:opacity-50"
+                          className="mt-3 rounded-sm bg-error px-3.5 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           Deactivate {selected.full_name}
                         </button>
@@ -523,15 +524,14 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
               <DetailFooter
                 left={
                   <>
-                    <div className="text-xs tabular-nums text-gray-500">Last updated {shortDate(selected.updated_at)} · changes recorded to the audit log</div>
-                    <div className="text-[11px] text-gray-400">J / K to navigate · ↵ save</div>
+                    <div className="text-xs text-slate-600">Last updated <span className="num">{shortDate(selected.updated_at)}</span> · changes recorded to the audit log</div>
                   </>
                 }
               >
                 <button
                   type="button"
                   onClick={() => setMemberTab(memberTab === "role" ? "activity" : "role")}
-                  className="uui-btn-secondary h-9 rounded-md px-3 text-xs font-medium"
+                  className="uui-btn-secondary h-9 rounded-sm px-3 text-xs font-medium"
                 >
                   {memberTab === "role" ? "View activity" : "Back to role"}
                 </button>
@@ -539,7 +539,7 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
                   type="button"
                   disabled={!canManage || !hasDraftChanges}
                   onClick={handleSaveMember}
-                  className="uui-btn-primary h-9 rounded-md px-3.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                  className="uui-btn-primary h-9 rounded-sm px-3.5 text-xs font-medium disabled:cursor-not-allowed"
                 >
                   Save changes
                 </button>
@@ -569,14 +569,14 @@ function DesignationToggle({
   return (
     <label
       className={clsx(
-        "flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-sm shadow-xs ring-1 ring-inset transition",
-        checked ? "bg-blue-50/30 ring-2 ring-inset ring-blue-600" : "bg-white ring-[#d0d5dd]",
+        "flex items-start gap-2.5 rounded-sm px-3 py-2.5 text-sm ring-1 ring-inset transition",
+        checked ? "bg-accent-tint/40 ring-2 ring-inset ring-accent" : "bg-white ring-slate-500",
       )}
     >
       <input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} className="mt-0.5" />
       <span>
-        <span className="block font-medium text-[#101828]">{title}</span>
-        <span className="block text-xs text-[#667085]">{description}</span>
+        <span className="block font-medium text-slate-900">{title}</span>
+        <span className="block text-xs text-slate-600">{description}</span>
       </span>
     </label>
   );
@@ -591,21 +591,21 @@ function MemberActivityPanel({ memberId }: { memberId: string }) {
     entries = [];
   }
   if (entries.length === 0) {
-    return <p className="text-sm text-[#667085]">No recorded activity for this team member yet.</p>;
+    return <p className="text-sm text-slate-600">No recorded activity for this team member yet.</p>;
   }
   return (
     <ul className="space-y-3">
       {entries.map((entry) => (
-        <li key={entry.id} className="rounded-lg bg-white p-3 shadow-xs ring-1 ring-inset ring-[#e4e7ec]">
+        <li key={entry.id} className="rounded-sm bg-white p-3 ring-1 ring-inset ring-slate-200">
           <div className="flex items-center justify-between">
-            <span className="text-xs tabular-nums text-[#667085]">{entry.created_at}</span>
+            <span className="text-xs tabular-nums text-slate-600">{entry.created_at}</span>
             <StatusPill
               label={entry.action === "INSERT" ? "Added to roster" : "Role updated"}
               color={entry.action === "INSERT" ? "blue" : "purple"}
             />
           </div>
-          <p className="mt-1 text-sm text-[#344054]">{entry.reason ?? "No reason recorded"}</p>
-          <p className="text-xs text-[#667085]">
+          <p className="mt-1 text-sm text-slate-700">{entry.reason ?? "No reason recorded"}</p>
+          <p className="text-xs text-slate-600">
             by {entry.actor_name} ({entry.actor_email})
           </p>
         </li>
@@ -641,13 +641,13 @@ function InviteMemberForm({
   return (
     <>
       <DetailScroll>
-      <DetailTopBar breadcrumb={<span className="font-medium text-[#101828]">Invite new member</span>} />
+      <DetailTopBar breadcrumb={<span className="font-medium text-slate-900">Invite new member</span>} />
       <div className="max-w-3xl flex-1 space-y-4 px-7 py-5">
         {message && message.kind === "error" && (
-          <div className="rounded-lg bg-[#fef3f2] px-3.5 py-2.5 text-sm text-[#b42318] ring-1 ring-inset ring-[#fecdca]">{message.text}</div>
+          <div className="rounded-sm bg-error-tint px-3.5 py-2.5 text-sm text-error ring-1 ring-inset ring-error/25">{message.text}</div>
         )}
         {!canManage && (
-          <div className="rounded-lg bg-[#fffaeb] px-3.5 py-2.5 text-sm text-[#93370d] ring-1 ring-inset ring-[#fedf89]">
+          <div className="rounded-sm bg-warning-tint px-3.5 py-2.5 text-sm text-warning ring-1 ring-inset ring-warning/25">
             Only an active Admin can invite members.
           </div>
         )}
@@ -656,12 +656,12 @@ function InviteMemberForm({
           <LabeledInput label="Email" type="email" value={form.email} onChange={(v) => setForm((p) => ({ ...p, email: v }))} />
         </div>
         <div>
-          <label htmlFor={roleId} className="mb-1 block text-sm font-medium text-[#344054]">Role</label>
+          <label htmlFor={roleId} className="mb-1 block text-sm font-medium text-slate-700">Role</label>
           <select
             id={roleId}
             value={form.role}
             onChange={(e) => setForm((p) => ({ ...p, role: e.target.value as Role }))}
-            className="w-full rounded-lg border border-[#d0d5dd] bg-white px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef]"
+            className="w-full rounded-sm border border-slate-500 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-ring"
           >
             {ROLE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -684,11 +684,11 @@ function InviteMemberForm({
           />
         </div>
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm text-[#344054]">
+          <label className="flex items-center gap-2 text-sm text-slate-700">
             <input type="checkbox" checked={form.isCalDesignee} onChange={(e) => setForm((p) => ({ ...p, isCalDesignee: e.target.checked }))} />
             Cal Designee
           </label>
-          <label className="flex items-center gap-2 text-sm text-[#344054]">
+          <label className="flex items-center gap-2 text-sm text-slate-700">
             <input
               type="checkbox"
               checked={form.isDesignatedAuditor}
@@ -699,15 +699,15 @@ function InviteMemberForm({
         </div>
       </div>
       </DetailScroll>
-      <DetailFooter left={<div className="text-xs text-gray-500">Invitations are recorded to the compliance audit log.</div>}>
-        <button type="button" onClick={onCancel} className="uui-btn-secondary h-9 rounded-md px-3 text-xs font-medium">
+      <DetailFooter left={<div className="text-xs text-slate-600">Invitations are recorded to the compliance audit log.</div>}>
+        <button type="button" onClick={onCancel} className="uui-btn-secondary h-9 rounded-sm px-3 text-xs font-medium">
           Cancel
         </button>
         <button
           type="button"
           disabled={!canManage || !form.email.trim() || !form.fullName.trim()}
           onClick={onSubmit}
-          className="uui-btn-primary h-9 rounded-md px-3.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50"
+          className="uui-btn-primary h-9 rounded-sm px-3.5 text-xs font-medium disabled:cursor-not-allowed"
         >
           Send invitation
         </button>
@@ -732,14 +732,14 @@ function LabeledInput({
   const id = useId();
   return (
     <div>
-      <label htmlFor={id} className="mb-1 block text-sm font-medium text-[#344054]">{label}</label>
+      <label htmlFor={id} className="mb-1 block text-sm font-medium text-slate-700">{label}</label>
       <input
         id={id}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={clsx(
-          "w-full rounded-lg border border-[#d0d5dd] px-3 py-2 text-sm shadow-xs focus:outline-none focus:ring-2 focus:ring-[#155eef]",
+          "w-full rounded-sm border border-slate-500 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-ring",
           mono && "font-mono tabular-nums",
         )}
       />

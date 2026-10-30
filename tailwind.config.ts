@@ -1,69 +1,50 @@
 import type { Config } from "tailwindcss";
 
+// DESIGN.md §10 (v6 Ops Navy). Values live as CSS variables in src/app/globals.css.
+
+// color-mix keeps opacity modifiers (e.g. bg-slate-900/85) working on hex variables.
+const token = (name: string) => `color-mix(in srgb, var(${name}) calc(<alpha-value> * 100%), transparent)`;
 const config: Config = {
   darkMode: ["class"],
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-sans)", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
-        mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"],
-      },
-      boxShadow: {
-        "2xs": "var(--shadow-2xs)",
-        xs: "var(--shadow-xs)",
-        skeuomorphic: "var(--shadow-skeuomorphic)",
-        "xs-skeuomorphic": "var(--shadow-xs-skeuomorphic)",
+        sans: ["var(--font-sans)"],
+        mono: ["var(--font-mono)"],
       },
       colors: {
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+        slate: {
+          50: token("--slate-50"),
+          100: token("--slate-100"),
+          200: token("--slate-200"),
+          300: token("--slate-300"),
+          400: token("--slate-400"),
+          500: token("--slate-500"),
+          600: token("--slate-600"),
+          700: token("--slate-700"),
+          800: token("--slate-800"),
+          900: token("--slate-900"),
+          950: token("--slate-950"),
         },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        sidebar: {
-          DEFAULT: "hsl(var(--sidebar-background))",
-          foreground: "hsl(var(--sidebar-foreground))",
-          primary: "hsl(var(--sidebar-primary))",
-          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
-          accent: "hsl(var(--sidebar-accent))",
-          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
-          border: "hsl(var(--sidebar-border))",
-          ring: "hsl(var(--sidebar-ring))",
-        },
+        accent: { DEFAULT: token("--accent"), hover: token("--accent-hover"), tint: token("--accent-tint"), ring: token("--accent-ring") },
+        success: { DEFAULT: token("--success"), tint: token("--success-tint"), dot: token("--success-dot") },
+        warning: { DEFAULT: token("--warning"), tint: token("--warning-tint"), dot: token("--warning-dot") },
+        error: { DEFAULT: token("--error"), tint: token("--error-tint"), dot: token("--error-dot") },
+        info: { DEFAULT: token("--info"), tint: token("--info-tint"), dot: token("--info-dot") },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        none: "0",
+        xs: "var(--radius-xs)",
+        sm: "var(--radius-sm)",
+        DEFAULT: "var(--radius-sm)",
+        md: "var(--radius-md)",
+        lg: "var(--radius-lg)",
+        full: "9999px",
+      },
+      boxShadow: {
+        overlay: "var(--shadow-overlay)",
+        none: "none",
       },
     },
   },

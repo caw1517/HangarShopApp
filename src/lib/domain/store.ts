@@ -448,7 +448,7 @@ export class ShopFoundationStore {
       "org_memberships",
       adminMembership.id,
       "INSERT",
-      "Shop provisioned by Platform Owner — initial Admin invitation",
+      "Shop provisioned by Platform Owner, initial Admin invitation",
       null,
       adminMembership as unknown as Record<string, unknown>,
     );

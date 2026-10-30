@@ -61,7 +61,7 @@ function areaLabel(tableName: string): string {
 }
 
 function humanizeValue(key: string, value: unknown): string {
-  if (value === null || value === undefined || value === "") return "—";
+  if (value === null || value === undefined || value === "") return "None";
   if (typeof value === "boolean") return value ? "Yes" : "No";
   if (key === "role" || key === "status") {
     const s = String(value);
@@ -100,7 +100,7 @@ function buildDiff(entry: AuditLogEntry): DiffRow[] {
     if (!inBefore && !inAfter) continue;
     if (entry.action === "INSERT") {
       if (!inAfter) continue;
-      rows.push({ key, label, before: "—", after: humanizeValue(key, after[key]) });
+      rows.push({ key, label, before: "None", after: humanizeValue(key, after[key]) });
     } else {
       if (JSON.stringify(before[key]) === JSON.stringify(after[key])) continue;
       rows.push({ key, label, before: humanizeValue(key, before[key]), after: humanizeValue(key, after[key]) });
@@ -196,7 +196,7 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {header}
         <div className="flex h-full items-center justify-center p-10 text-center">
-          <p className="max-w-sm text-sm text-[#667085]">{accessError}</p>
+          <p className="max-w-sm text-sm text-slate-600">{accessError}</p>
         </div>
       </div>
     );
@@ -246,22 +246,22 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
                   line1={headlineFor(entry)}
                   line2={
                     <>
-                      <span className="font-mono">AUD-{shortId(entry.id)}</span> · {entry.actor_name}
+                      <span className="font-mono num">AUD-{shortId(entry.id)}</span> · {entry.actor_name}
                     </>
                   }
                   pill={<StatusPill label={pill.label} color={pill.color} />}
-                  subLabel={entry.created_at.slice(0, 10)}
+                  subLabel={<span className="num">{entry.created_at.slice(0, 10)}</span>}
                 />
               );
             })}
-            {filtered.length === 0 && <p className="px-4 py-6 text-sm text-[#667085]">No audit log entries match this filter.</p>}
+            {filtered.length === 0 && <p className="px-4 py-6 text-sm text-slate-600">No audit log entries match this filter.</p>}
           </ListScroll>
           </>
         }
         detail={
           <>
           {!selected ? (
-            <div className="flex h-full items-center justify-center p-10 text-sm text-[#667085]">
+            <div className="flex h-full items-center justify-center p-10 text-sm text-slate-600">
               Select an entry to inspect what changed, who made the change, and why.
             </div>
           ) : (
@@ -270,22 +270,22 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
               <DetailTopBar
                 breadcrumb={
                   <>
-                    Compliance Audit Register › <span className="font-mono font-medium text-[#101828]">AUD-{shortId(selected.id)}</span>
+                    Compliance Audit Register › <span className="font-mono font-medium text-slate-900">AUD-{shortId(selected.id)}</span>
                   </>
                 }
                 actions={<StatusPill label="Permanent record" color="green" />}
               />
 
               <DetailHeaderBlock
-                icon={<ShieldCheck className="h-5 w-5 text-[#155eef]" />}
+                icon={<ShieldCheck className="h-5 w-5 text-accent" />}
                 title={headlineFor(selected)}
                 meta={
                   <>
-                    <span className="font-medium text-[#344054]">{areaLabel(selected.table_name)}</span>
+                    <span className="font-medium text-slate-700">{areaLabel(selected.table_name)}</span>
                     <span>·</span>
                     <span>{selected.actor_name ?? "System"}</span>
                     <span>·</span>
-                    <span>{formatInTimeZone(selected.created_at, timezone)}</span>
+                    <span className="num">{formatInTimeZone(selected.created_at, timezone)}</span>
                   </>
                 }
                 pill={<StatusPill label={actionPill(selected.action).label} color={actionPill(selected.action).color} />}
@@ -310,24 +310,24 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
 
               <div className="max-w-3xl flex-1 space-y-5 px-7 py-5">
                 <div>
-                  <p className="mb-2 text-sm font-medium text-[#344054]">What changed</p>
+                  <p className="mb-2 text-sm font-medium text-slate-700">What changed</p>
                   <ChangeTable entry={selected} />
                 </div>
 
                 <div>
-                  <p className="mb-1.5 text-sm font-medium text-[#344054]">Reason given</p>
-                  <div className="rounded-lg border border-[#e4e7ec] bg-[#f9fafb] px-3.5 py-2.5 text-sm text-[#344054]">
+                  <p className="mb-1.5 text-sm font-medium text-slate-700">Reason given</p>
+                  <div className="rounded-sm border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-700">
                     {selected.reason ?? "No reason was recorded for this change."}
                   </div>
                 </div>
 
-                <div className="rounded-lg border border-[#eaecf0] bg-white p-4 shadow-xs">
-                  <p className="inline-flex items-center gap-1.5 text-sm font-medium text-[#101828]">
-                    <ShieldCheck className="h-4 w-4 text-[#17b26a]" />
+                <div className="rounded-sm border border-slate-200 bg-white p-4">
+                  <p className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-900">
+                    <ShieldCheck className="h-4 w-4 text-success-dot" />
                     Append-only record
                   </p>
-                  <p className="mt-1 text-xs text-[#667085]">
-                    Append-only. Entries can&apos;t be edited or deleted once written — not even by a Shop Admin.
+                  <p className="mt-1 text-xs text-slate-600">
+                    Entries can&apos;t be edited or deleted, including by admins.
                   </p>
                 </div>
               </div>
@@ -336,12 +336,10 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
               <DetailFooter
                 left={
                   <>
-                    <div className="text-xs tabular-nums text-gray-500">Recorded {formatInTimeZone(selected.created_at, timezone)} · entry is permanent</div>
-                    <div className="text-[11px] text-gray-400">J / K to navigate</div>
+                    <div className="text-xs text-slate-600">Recorded <span className="num">{formatInTimeZone(selected.created_at, timezone)}</span> · entry is permanent</div>
                   </>
                 }
               >
-                <span className="text-[11px] text-gray-400">Append-only — entries can&apos;t be edited or deleted.</span>
               </DetailFooter>
             </>
           )}
@@ -355,21 +353,21 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
 function ChangeTable({ entry }: { entry: AuditLogEntry }) {
   const rows = buildDiff(entry);
   if (rows.length === 0) {
-    return <p className="text-sm text-[#667085]">No field-level detail was captured for this entry.</p>;
+    return <p className="text-sm text-slate-600">No field-level detail was captured for this entry.</p>;
   }
   const showBefore = entry.action !== "INSERT";
   return (
-    <div className="overflow-hidden rounded-lg border border-[#e4e7ec]">
-      <div className="grid grid-cols-[1fr_1fr_1fr] gap-3 bg-[#f9fafb] px-4 py-2 text-xs font-medium text-[#667085]">
+    <div className="overflow-hidden rounded-sm border border-slate-200">
+      <div className="grid grid-cols-[1fr_1fr_1fr] gap-3 bg-slate-50 px-4 py-2 text-xs font-medium text-slate-600">
         <span>Field</span>
         <span>{showBefore ? "Previous" : "Set to"}</span>
         <span>{showBefore ? "Updated" : ""}</span>
       </div>
       {rows.map((row) => (
-        <div key={row.key} className="grid grid-cols-[1fr_1fr_1fr] gap-3 border-t border-[#e4e7ec] px-4 py-2.5 text-sm">
-          <span className="font-medium text-[#101828]">{row.label}</span>
-          <span className="tabular-nums text-[#667085]">{showBefore ? row.before : row.after}</span>
-          <span className="tabular-nums text-[#101828]">{showBefore ? row.after : ""}</span>
+        <div key={row.key} className="grid grid-cols-[1fr_1fr_1fr] gap-3 border-t border-slate-200 px-4 py-2.5 text-sm">
+          <span className="font-medium text-slate-900">{row.label}</span>
+          <span className="tabular-nums text-slate-600">{showBefore ? row.before : row.after}</span>
+          <span className="tabular-nums text-slate-900">{showBefore ? row.after : ""}</span>
         </div>
       ))}
     </div>

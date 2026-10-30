@@ -33,13 +33,16 @@ export function cycleNext<T>(items: readonly T[], current: T): T {
   return items[(idx + 1) % items.length] ?? items[0] ?? current;
 }
 
-/** The leading brand portion of a Shop name, dropping the "— Hangar 1" suffix. */
+/** Separates a Shop brand from its location, e.g. "Apex Charter MX · Hangar 1". */
+const SHOP_NAME_SEPARATOR = "·";
+
+/** The leading brand portion of a Shop name, dropping the " · Hangar 1" suffix. */
 export function shortShopName(name: string): string {
-  return (name.split("—")[0] ?? name).trim();
+  return (name.split(SHOP_NAME_SEPARATOR)[0] ?? name).trim();
 }
 
 /** The trailing location portion of a Shop name ("Hangar 1"), or null if none. */
 export function shopLocationSuffix(name: string): string | null {
-  const part = name.split("—")[1];
+  const part = name.split(SHOP_NAME_SEPARATOR)[1];
   return part ? part.trim() : null;
 }
