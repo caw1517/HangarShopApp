@@ -47,7 +47,7 @@ const CATEGORY_CYCLE = ["all", "Configuration", "Security"] as const;
 type CategoryTab = (typeof CATEGORY_CYCLE)[number];
 
 const ORG_NAME_FALLBACK: Record<string, string> = {
-  [ORG_APEX_ID]: "Apex Charter MX — Hangar 1",
+  [ORG_APEX_ID]: "Apex Charter MX · Hangar 1",
 };
 
 function emptySettingsForm(org: Organization) {

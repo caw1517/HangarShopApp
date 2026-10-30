@@ -40,7 +40,7 @@ export function seedOrganizations(): Organization[] {
     {
       id: ORG_APEX_ID,
       slug: "org-apex-h1",
-      name: "Apex Charter MX — Hangar 1",
+      name: "Apex Charter MX · Hangar 1",
       tool_id_prefix: "TL",
       timezone: "America/Los_Angeles",
       due_soon_days: 90,
@@ -162,7 +162,7 @@ export function seedMemberships(): OrgMembership[] {
       certificate_number: "3719204",
       invited_by: ELENA_USER_ID,
       deactivated_at: "2025-09-15T14:30:00.000Z",
-      deactivation_reason: "Departed technician — voluntary resignation",
+      deactivation_reason: "Departed technician, voluntary resignation",
       created_at: "2025-01-09T09:00:00.000Z",
       updated_at: "2025-09-15T14:30:00.000Z",
     },
@@ -237,7 +237,7 @@ export function seedAuditLog(): AuditLogEntry[] {
   return [
     insertEntry("00c00001-0000-4000-8000-000000000001", ORG_APEX_ID, "organizations", ORG_APEX_ID, elena, {
       slug: "org-apex-h1",
-      name: "Apex Charter MX — Hangar 1",
+      name: "Apex Charter MX · Hangar 1",
     }, "2025-01-06T06:00:00.000Z"),
     insertEntry("00c00002-0000-4000-8000-000000000002", ORG_APEX_ID, "org_memberships", ELENA_APEX_ID, elena, {
       email: "elena.rostova@apexchartermx.example",
@@ -268,7 +268,7 @@ export function seedAuditLog(): AuditLogEntry[] {
       table_name: "org_memberships",
       record_id: HANNAH_APEX_ID,
       action: "UPDATE",
-      reason: "Departed technician — voluntary resignation",
+      reason: "Departed technician, voluntary resignation",
       before_data: { status: "active", deactivated_at: null },
       after_data: { status: "deactivated", deactivated_at: "2025-09-15T14:30:00.000Z" },
       created_at: "2025-09-15T14:30:00.000Z",

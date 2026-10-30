@@ -8,7 +8,7 @@ import { PERSONA_ORDER, PERSONAS, type PersonaKey } from "@/lib/domain/personas"
 import { ORG_APEX_ID, ORG_CASCADE_ID, ORG_SLUG_BY_ID } from "@/lib/domain/seed";
 
 const SHOPS = [
-  { id: ORG_APEX_ID, label: "Apex Charter MX — Hangar 1" },
+  { id: ORG_APEX_ID, label: "Apex Charter MX · Hangar 1" },
   { id: ORG_CASCADE_ID, label: "Cascade Flight Services" },
 ];
 

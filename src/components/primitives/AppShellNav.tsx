@@ -45,7 +45,7 @@ const ADMIN_ICON: Record<WorkspaceView, typeof Users> = {
 };
 
 const SHOPS = [
-  { id: ORG_APEX_ID, fallback: "Apex Charter MX — Hangar 1" },
+  { id: ORG_APEX_ID, fallback: "Apex Charter MX · Hangar 1" },
   { id: ORG_CASCADE_ID, fallback: "Cascade Flight Services" },
 ];
 
@@ -71,11 +71,11 @@ export function AppShellNav({ activeView, activeSection, onSelectView, onSelectS
     setSwitcherOpen(false);
   };
 
-  // Shop header derivation (two-line title + brand mark), with a graceful
+  // Shop header derivation (text wordmark + location line), with a graceful
   // fallback for a signed-in user with no read access to the active Shop (e.g.
   // the Platform Owner). The fallback is split the same way as a readable Shop
-  // so the brand line stays short ("Apex Charter MX") instead of showing the
-  // full "— Hangar 1" suffix and truncating.
+  // so the wordmark stays short ("Apex Charter MX") instead of showing the
+  // full " · Hangar 1" suffix and truncating.
   const fallbackName = SHOPS.find((s) => s.id === domain.activeOrgId)?.fallback ?? "Unknown Shop";
   let shopTitle = shortShopName(fallbackName);
   let shopLocation: string | null = shopLocationSuffix(fallbackName);
@@ -109,7 +109,6 @@ export function AppShellNav({ activeView, activeSection, onSelectView, onSelectS
     auditCount = null;
   }
 
-  const brandInitials = initials(shopTitle);
   // Rail subtitle is the location only (e.g. "Hangar 1"); the tool-ID prefix and
   // timezone live in the Settings detail header, not the rail, so the line stays
   // short and never truncates at narrow widths.
@@ -122,26 +121,21 @@ export function AppShellNav({ activeView, activeSection, onSelectView, onSelectS
   };
 
   return (
-    <nav className="flex h-full w-[232px] shrink-0 select-none flex-col border-r border-[#1f242f] bg-[#0c111d] text-white">
-      {/* Shop switcher header block */}
+    <nav className="flex h-full w-[232px] shrink-0 select-none flex-col border-r border-slate-800 bg-slate-950 text-white">
+      {/* Shop switcher header block: plain text wordmark until a real mark is supplied */}
       <div className="relative p-3.5">
         <button
           type="button"
           onClick={() => setSwitcherOpen((v) => !v)}
-          className="flex w-full items-center justify-between gap-2.5 rounded-md px-2 py-1.5 transition hover:bg-[#1f242f]/60"
+          className="flex w-full items-center justify-between gap-2.5 rounded-sm px-2 py-1.5 transition hover:bg-slate-800/60"
         >
-          <span className="flex min-w-0 items-center gap-2.5">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#155eef] text-xs font-semibold text-white">
-              {brandInitials}
-            </span>
-            <span className="min-w-0 text-left">
-              <span className="line-clamp-2 text-sm font-semibold leading-tight tracking-tight text-white">{shopTitle}</span>
-              {subtitleParts.length > 0 && (
-                <span className="block truncate text-[11px] text-white/65">{subtitleParts.join(" · ")}</span>
-              )}
-            </span>
+          <span className="min-w-0 text-left">
+            <span className="line-clamp-2 text-sm font-semibold leading-tight text-white">{shopTitle}</span>
+            {subtitleParts.length > 0 && (
+              <span className="block truncate text-xs text-slate-400">{subtitleParts.join(" · ")}</span>
+            )}
           </span>
-          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-white/60" />
+          <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-400" />
         </button>
 
         {switcherOpen && (
@@ -152,28 +146,22 @@ export function AppShellNav({ activeView, activeSection, onSelectView, onSelectS
               onClick={() => setSwitcherOpen(false)}
               className="fixed inset-0 z-10 cursor-default"
             />
-            <div className="absolute left-3.5 right-3.5 top-[3.75rem] z-20 overflow-hidden rounded-lg border border-[#1f242f] bg-[#161b26] p-1 shadow-xl">
-              <p className="px-2 py-1.5 text-[11px] font-medium text-white/45">Switch Shop</p>
+            <div className="absolute left-3.5 right-3.5 top-[3.75rem] z-20 overflow-hidden rounded-md border border-slate-800 bg-slate-900 p-1 shadow-overlay">
+              <p className="px-2 py-1.5 text-xs font-medium text-slate-400">Switch shop</p>
               {SHOPS.map((shop) => {
                 const active = shop.id === domain.activeOrgId;
-                const shortTitle = shortShopName(shop.fallback);
                 return (
                   <button
                     key={shop.id}
                     type="button"
                     onClick={() => handleShopChange(shop.id)}
                     className={clsx(
-                      "flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm transition",
-                      active ? "bg-[#1f242f] text-white" : "text-white/80 hover:bg-[#1f242f]/60 hover:text-white",
+                      "flex w-full items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-left text-sm transition",
+                      active ? "bg-slate-800 text-white" : "text-slate-200 hover:bg-slate-800/60 hover:text-white",
                     )}
                   >
-                    <span className="flex min-w-0 items-center gap-2.5">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#155eef] text-[10px] font-semibold text-white">
-                        {initials(shortTitle)}
-                      </span>
-                      <span className="truncate text-xs font-medium">{shop.fallback}</span>
-                    </span>
-                    {active && <Check className="h-3.5 w-3.5 shrink-0 text-[#155eef]" />}
+                    <span className="truncate text-xs font-medium">{shop.fallback}</span>
+                    {active && <Check className="h-3.5 w-3.5 shrink-0 text-accent-ring" />}
                   </button>
                 );
               })}
@@ -196,8 +184,8 @@ export function AppShellNav({ activeView, activeSection, onSelectView, onSelectS
           ))}
         </div>
 
-        <div className="my-3 border-t border-[#1f242f] pt-3">
-          <p className="px-3 pb-1 text-[11px] font-medium text-white/45">Administration</p>
+        <div className="my-3 border-t border-slate-800 pt-3">
+          <p className="px-3 pb-1 text-xs font-medium text-slate-400">Administration</p>
           <div className="space-y-0.5">
             {FOUNDATION_TABS.map((tab) => (
               <NavItem
@@ -214,14 +202,14 @@ export function AppShellNav({ activeView, activeSection, onSelectView, onSelectS
       </div>
 
       {/* Signed-in user footer */}
-      <div className="border-t border-[#1f242f] bg-[#0c111d] p-3.5">
+      <div className="border-t border-slate-800 bg-slate-950 p-3.5">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#155eef] text-[11px] font-medium text-white">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-[11px] font-medium text-slate-700">
             {initials(domain.principal.fullName)}
           </div>
           <div className="min-w-0">
             <p className="truncate text-xs font-medium text-white">{domain.principal.fullName}</p>
-            <p className="line-clamp-2 text-[11px] leading-tight text-white/65">{hasAccess || domain.principal.isPlatformOwner ? footerSubtitle : "No Shop access"}</p>
+            <p className="line-clamp-2 text-xs leading-tight text-slate-400">{hasAccess || domain.principal.isPlatformOwner ? footerSubtitle : "No Shop access"}</p>
           </div>
         </div>
       </div>
@@ -247,17 +235,17 @@ function NavItem({
       type="button"
       onClick={onClick}
       className={clsx(
-        "flex w-full items-center justify-between gap-2.5 rounded-md px-3 py-2 text-xs font-medium transition",
-        active ? "bg-[#1f242f] text-white" : "text-white/75 hover:bg-[#1f242f]/60 hover:text-white",
+        "relative flex w-full items-center justify-between gap-2.5 rounded-sm px-3 py-2 text-xs font-medium transition",
+        active ? "bg-slate-800 text-white" : "text-slate-200 hover:bg-slate-800/60 hover:text-white",
       )}
     >
+      {/* 2px inset active indicator; the lighter accent ring step reads on the dark rail. */}
+      {active && <span className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-accent-ring" aria-hidden />}
       <span className="flex items-center gap-2.5">
-        <Icon className={clsx("h-4 w-4 shrink-0", active ? "text-[#155eef]" : "text-white/65")} />
+        <Icon className={clsx("h-4 w-4 shrink-0", active ? "text-white" : "text-slate-400")} />
         <span>{label}</span>
       </span>
-      {count != null && (
-        <span className={clsx("text-[11px] tabular-nums", active ? "text-white/80" : "text-white/60")}>{count}</span>
-      )}
+      {count != null && <span className="num text-[11px] text-slate-400">{count}</span>}
     </button>
   );
 }

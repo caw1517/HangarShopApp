@@ -103,7 +103,7 @@ function AppRootInner() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f9fafb]">
+    <div className="flex h-screen overflow-hidden bg-slate-50">
       <AppShellNav
         activeView={view}
         activeSection={previewSection}
@@ -136,23 +136,21 @@ function SignedOutScreen({
 }) {
   const manual = reason === "manual";
   return (
-    <div className="flex h-screen flex-col items-center justify-center bg-[#0c111d] px-4 text-center">
-      <div className="w-full max-w-sm rounded-xl bg-white p-8 shadow-xl">
-        <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-[#155eef] text-sm font-semibold text-white">
-          HS
-        </div>
-        <h1 className="text-lg font-semibold text-[#101828]">
+    <div className="flex h-screen flex-col items-center justify-center bg-slate-50 px-4 text-center">
+      <p className="mb-6 text-base font-semibold text-slate-900">HangarShopApp</p>
+      <div className="w-full max-w-sm border border-slate-200 bg-white p-8">
+        <h1 className="text-lg font-semibold text-slate-900">
           {manual ? "You've signed out" : "You've been signed out"}
         </h1>
-        <p className="mt-2 text-sm text-[#475467]">
+        <p className="mt-2 text-sm text-slate-600">
           {manual
-            ? "You've signed out. Sign in again to return to your Shop."
-            : "Your session ended after the configured idle timeout. Sign in again to return to your Shop."}
+            ? "Sign in again to return to your shop."
+            : "You were signed out after a period of inactivity. Sign in again to return to your shop."}
         </p>
         <button
           type="button"
           onClick={onSignIn}
-          className="uui-btn-primary mt-6 w-full rounded-lg px-3.5 py-2.5 text-sm font-medium"
+          className="uui-btn-primary mt-6 min-h-11 w-full px-3.5 py-2.5 text-sm font-medium"
         >
           Sign in again
         </button>

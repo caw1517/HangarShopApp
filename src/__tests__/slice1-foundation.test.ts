@@ -65,7 +65,7 @@ describe("Multi-Shop data & storage path isolation (ADR-0001)", () => {
   it("lets Elena read both Shops she is an active Member of, scoped independently", () => {
     const apexOrg = store.getOrganization(elena, ORG_APEX_ID);
     const cascadeOrg = store.getOrganization(elena, ORG_CASCADE_ID);
-    expect(apexOrg.name).toBe("Apex Charter MX — Hangar 1");
+    expect(apexOrg.name).toBe("Apex Charter MX · Hangar 1");
     expect(cascadeOrg.name).toBe("Cascade Flight Services");
     // Role re-scoping: Admin at Apex, Inspector at Cascade
     expect(store.hasOrgRole(elena, ORG_APEX_ID, ["admin"])).toBe(true);
