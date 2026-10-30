@@ -64,7 +64,7 @@ export function ContextHeaderBar({
             value={search}
             onChange={(e) => onSearch(e.target.value)}
             placeholder={searchPlaceholder}
-            className="h-8 w-full rounded-sm border border-slate-200 bg-slate-50 pl-8 pr-3 text-xs text-slate-900 placeholder:text-slate-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent-ring"
+            className="h-8 w-full rounded-sm border border-slate-500 bg-slate-50 pl-8 pr-3 text-xs text-slate-900 placeholder:text-slate-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-accent-ring"
           />
         </div>
         {primary && (
@@ -236,7 +236,7 @@ export function ListRow({ selected, onClick, state, line1, line2, pill, subLabel
       onClick={onClick}
       className={clsx(
         "flex w-full items-start gap-3 px-4 py-3.5 text-left transition",
-        selected ? "bg-slate-100" : "bg-white hover:bg-slate-50",
+        selected ? "bg-accent-tint" : "bg-white hover:bg-slate-50",
       )}
     >
       <div className="mt-0.5">
@@ -276,15 +276,23 @@ export function DetailHeaderBlock({
   title,
   meta,
   pill,
+  avatar,
 }: {
   icon: React.ReactNode;
   title: string;
   meta: React.ReactNode;
   pill?: React.ReactNode;
+  /** Render the leading mark as a neutral slate-100 circle (initials), matching the rail avatar. */
+  avatar?: boolean;
 }) {
   return (
     <div className="flex items-start justify-between gap-4 px-7 pt-5">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-slate-50 text-xs font-semibold text-slate-700 ring-1 ring-inset ring-slate-200">
+      <div
+        className={clsx(
+          "flex h-10 w-10 shrink-0 items-center justify-center text-xs font-semibold text-slate-700",
+          avatar ? "rounded-full bg-slate-100" : "rounded-sm bg-slate-50 ring-1 ring-inset ring-slate-200",
+        )}
+      >
         {icon}
       </div>
       <div className="min-w-0 flex-1 space-y-1">

@@ -369,6 +369,7 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
 
               <DetailHeaderBlock
                 icon={initials(selected.full_name)}
+                avatar
                 title={selected.full_name}
                 meta={
                   <>
