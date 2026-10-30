@@ -1,69 +1,47 @@
 import type { Config } from "tailwindcss";
 
+// DESIGN.md §10 (v6 Ops Navy). Values live as CSS variables in src/app/globals.css.
 const config: Config = {
   darkMode: ["class"],
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       fontFamily: {
-        sans: ["var(--font-sans)", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
-        mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"],
-      },
-      boxShadow: {
-        "2xs": "var(--shadow-2xs)",
-        xs: "var(--shadow-xs)",
-        skeuomorphic: "var(--shadow-skeuomorphic)",
-        "xs-skeuomorphic": "var(--shadow-xs-skeuomorphic)",
+        sans: ["var(--font-sans)"],
+        mono: ["var(--font-mono)"],
       },
       colors: {
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+        slate: {
+          50: "var(--slate-50)",
+          100: "var(--slate-100)",
+          200: "var(--slate-200)",
+          300: "var(--slate-300)",
+          400: "var(--slate-400)",
+          500: "var(--slate-500)",
+          600: "var(--slate-600)",
+          700: "var(--slate-700)",
+          800: "var(--slate-800)",
+          900: "var(--slate-900)",
+          950: "var(--slate-950)",
         },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        sidebar: {
-          DEFAULT: "hsl(var(--sidebar-background))",
-          foreground: "hsl(var(--sidebar-foreground))",
-          primary: "hsl(var(--sidebar-primary))",
-          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
-          accent: "hsl(var(--sidebar-accent))",
-          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
-          border: "hsl(var(--sidebar-border))",
-          ring: "hsl(var(--sidebar-ring))",
-        },
+        accent: { DEFAULT: "var(--accent)", hover: "var(--accent-hover)", tint: "var(--accent-tint)", ring: "var(--accent-ring)" },
+        success: { DEFAULT: "var(--success)", tint: "var(--success-tint)", dot: "var(--success-dot)" },
+        warning: { DEFAULT: "var(--warning)", tint: "var(--warning-tint)", dot: "var(--warning-dot)" },
+        error: { DEFAULT: "var(--error)", tint: "var(--error-tint)", dot: "var(--error-dot)" },
+        info: { DEFAULT: "var(--info)", tint: "var(--info-tint)", dot: "var(--info-dot)" },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        none: "0",
+        xs: "var(--radius-xs)",
+        sm: "var(--radius-sm)",
+        DEFAULT: "var(--radius-sm)",
+        md: "var(--radius-md)",
+        lg: "var(--radius-lg)",
+        full: "9999px",
+      },
+      boxShadow: {
+        overlay: "var(--shadow-overlay)",
+        none: "none",
       },
     },
   },
