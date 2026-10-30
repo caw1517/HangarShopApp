@@ -61,7 +61,7 @@ function areaLabel(tableName: string): string {
 }
 
 function humanizeValue(key: string, value: unknown): string {
-  if (value === null || value === undefined || value === "") return "—";
+  if (value === null || value === undefined || value === "") return "None";
   if (typeof value === "boolean") return value ? "Yes" : "No";
   if (key === "role" || key === "status") {
     const s = String(value);
@@ -100,7 +100,7 @@ function buildDiff(entry: AuditLogEntry): DiffRow[] {
     if (!inBefore && !inAfter) continue;
     if (entry.action === "INSERT") {
       if (!inAfter) continue;
-      rows.push({ key, label, before: "—", after: humanizeValue(key, after[key]) });
+      rows.push({ key, label, before: "None", after: humanizeValue(key, after[key]) });
     } else {
       if (JSON.stringify(before[key]) === JSON.stringify(after[key])) continue;
       rows.push({ key, label, before: humanizeValue(key, before[key]), after: humanizeValue(key, after[key]) });
@@ -327,7 +327,7 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
                     Append-only record
                   </p>
                   <p className="mt-1 text-xs text-slate-600">
-                    Append-only. Entries can&apos;t be edited or deleted once written — not even by a Shop Admin.
+                    Entries can&apos;t be edited or deleted, including by admins.
                   </p>
                 </div>
               </div>
@@ -336,12 +336,10 @@ export function AuditLogView({ chrome }: { chrome: ViewChrome }) {
               <DetailFooter
                 left={
                   <>
-                    <div className="text-xs tabular-nums text-slate-600">Recorded {formatInTimeZone(selected.created_at, timezone)} · entry is permanent</div>
-                    <div className="text-[11px] text-slate-500">J / K to navigate</div>
+                    <div className="text-xs tabular-nums text-slate-600">Recorded {formatInTimeZone(selected.created_at, timezone)} · entry is permanent</div>
                   </>
                 }
-              >
-                <span className="text-[11px] text-slate-500">Append-only — entries can&apos;t be edited or deleted.</span>
+              >
               </DetailFooter>
             </>
           )}

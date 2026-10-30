@@ -25,36 +25,36 @@ const CONTENT: Record<PreviewSection, SectionContent> = {
     title: "Tools & Calibration",
     subtitle: "Calibrated & shop tools",
     blurb:
-      "The tool register, calibration due-soon tracking, and the overdue quarantine workflow are on the way. Due-soon windows are already configurable per Shop in Shop Settings.",
+      "The tool register, calibration due-soon tracking, and the overdue quarantine workflow are on the way. You can already set the due-soon window in Shop settings.",
     willTrack: ["Tool register", "Calibration due-soon", "Overdue quarantine", "Out for calibration"],
   },
   consumables: {
     title: "Consumables & Lots",
     subtitle: "Shelf-life tracked lots",
     blurb:
-      "Lot receiving, shelf-life expiry, and cycle-count variance posting are on the way. Shelf-life thresholds are already configurable per Shop.",
+      "Lot receiving, shelf-life expiry, and cycle-count variance posting are on the way. You can already set shelf-life thresholds in Shop settings.",
     willTrack: ["Lot receiving", "Shelf-life expiry", "Expired / disposal", "Low-stock alerts"],
   },
   locations: {
     title: "Locations",
     subtitle: "Hangar, crib & cabinet hierarchy",
     blurb:
-      "The location / lot hierarchy — hangars, cribs, cabinets, drawers, and QR-coded spots — is on the way. Each Shop's locations stay fully isolated from every other Shop.",
-    willTrack: ["Storage hierarchy", "Cabinets & drawers", "QR-coded spots", "Per-Shop isolation"],
+      "Set up hangars, tool cribs, cabinets, drawers and QR-labeled spots, then see what is stored where. Each shop keeps its own list of locations.",
+    willTrack: ["Storage hierarchy", "Cabinets & drawers", "QR-coded spots", "Separate list per shop"],
   },
   audits: {
     title: "Audits & Cycle Counts",
     subtitle: "Cycle counts & facility audits",
     blurb:
-      "Cycle counts, facility audits, and the sign-off / segregation flows build on the append-only audit log that is live today. Designated Auditor gating is already enforced per Member.",
-    willTrack: ["Cycle counts", "Facility audits", "Sign-off & segregation", "Designated Auditor gating"],
+      "Run cycle counts and facility audits, then have someone other than the counter sign off. Only members marked as auditors can sign off.",
+    willTrack: ["Cycle counts", "Facility audits", "Independent sign-off", "Auditor-only sign-off"],
   },
   imports: {
     title: "Imports",
     subtitle: "CSV & ERP batch sync history",
     blurb:
-      "Bulk CSV imports and ERP batch sync — for seeding tools, consumables, and locations — are on the way. Every import will be scoped to the active Shop and recorded in the audit log.",
-    willTrack: ["CSV imports", "ERP batch sync", "Row-level review", "Audit-logged runs"],
+      "Bring in tools, consumables and locations from a CSV file or your ERP. Each import goes into the shop you are working in and shows up in the audit log.",
+    willTrack: ["CSV imports", "ERP batch sync", "Row-level review", "Import history"],
   },
   fleet: {
     title: "Fleet & Programs",
@@ -67,7 +67,7 @@ const CONTENT: Record<PreviewSection, SectionContent> = {
     title: "Work Orders",
     subtitle: "Hangar maintenance",
     blurb:
-      "Work orders linking tools and consumables to procedure steps are on the way. They will draw on the same per-Shop roles and designations enforced today.",
+      "Work orders linking tools and consumables to procedure steps are on the way. They will use the same roles and designations you set up today.",
     willTrack: ["Procedure steps", "Tool & lot draws", "Assignment & status", "Discrepancies"],
   },
 };

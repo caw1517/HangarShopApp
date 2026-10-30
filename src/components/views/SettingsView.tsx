@@ -35,10 +35,10 @@ const SECTIONS: Array<{
   category: "Configuration" | "Security";
   icon: typeof SettingsIcon;
 }> = [
-  { key: "thresholds", label: "Compliance Thresholds", blurb: "Due-soon, missing-tool & stale windows", category: "Configuration", icon: SettingsIcon },
-  { key: "digest", label: "Weekly Digest & Idle Timeout", blurb: "Scheduled summary and idle sign-out", category: "Configuration", icon: SettingsIcon },
-  { key: "provisioning", label: "New Shop Provisioning", blurb: "Create a new Shop and invite its first Admin", category: "Security", icon: Building },
-  { key: "rls", label: "Shop Isolation & Data Security", blurb: "Who can view and change each area", category: "Security", icon: Lock },
+  { key: "thresholds", label: "Compliance thresholds", blurb: "Due-soon, missing-tool & stale windows", category: "Configuration", icon: SettingsIcon },
+  { key: "digest", label: "Weekly digest & idle sign-out", blurb: "Scheduled summary and idle sign-out", category: "Configuration", icon: SettingsIcon },
+  { key: "provisioning", label: "New shop provisioning", blurb: "Create a new Shop and invite its first Admin", category: "Security", icon: Building },
+  { key: "rls", label: "Who can view and change each area", blurb: "Access by role in this shop", category: "Security", icon: Lock },
 ];
 
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -294,8 +294,8 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
             <MetadataGrid
               items={[
                 { label: "Time zone", value: timezone },
-                { label: "Tool ID prefix", value: <span className="font-mono tabular-nums">{org?.tool_id_prefix ?? "—"}</span> },
-                { label: "Due-soon window", value: <span className="tabular-nums">{org ? `${org.due_soon_days} days` : "—"}</span> },
+                { label: "Tool ID prefix", value: <span className="font-mono tabular-nums">{org?.tool_id_prefix ?? "Not set"}</span> },
+                { label: "Due-soon window", value: <span className="tabular-nums">{org ? `${org.due_soon_days} days` : "Not set"}</span> },
                 { label: "Idle sign-out", value: <span className="tabular-nums">{idleMinutes} min</span> },
               ]}
             />
@@ -338,7 +338,6 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
                 <div className="text-xs tabular-nums text-slate-600">
                   {org ? `Last updated ${org.updated_at.slice(0, 10)} · changes recorded to the audit log` : "Read-only"}
                 </div>
-                <div className="text-[11px] text-slate-500">J / K to navigate · ↵ save</div>
               </>
             }
           >
@@ -495,7 +494,7 @@ function ProvisioningPanel({ isPlatformOwner }: { isPlatformOwner: boolean }) {
     if (!receipt) return;
     try {
       domain.store.listMembers(domain.principal, receipt.org_id);
-      setVerifyResult("Unexpected: the Platform Owner could read the new Shop's roster. Shop isolation is broken.");
+      setVerifyResult("Unexpected: the Platform Owner could read the new Shop's roster. Access should stay blocked until its Admin sends an invite.");
     } catch (err) {
       if (err instanceof CrossTenantNotFoundError) {
         setVerifyResult("Confirmed: the Platform Owner has zero read access to the new Shop's roster unless its Admin invites them.");
@@ -565,14 +564,14 @@ function RlsMatrixPanel() {
   const rows = [
     { area: "Shop Settings", view: "Active Shop members", change: "Shop Admins only" },
     { area: "Team & Roles", view: "Active Shop members", change: "Shop Admins only" },
-    { area: "Compliance Audit Log", view: "Shop Admins and Inspectors", change: "Locked after creation — entries cannot be edited or removed" },
+    { area: "Compliance Audit Log", view: "Shop Admins and Inspectors", change: "No one. Entries can't be edited or removed" },
     { area: "Certificates & Attachments", view: "Active Shop members", change: "Active Shop members can upload; only Shop Admins and Inspectors can overwrite or delete" },
   ];
   return (
     <div>
       <p className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-900">
         <ShieldCheck className="h-4 w-4 text-success-dot" />
-        Every Shop's data is fully isolated from every other Shop
+        Only members of this shop can see its records
       </p>
       <p className="mt-1 text-sm text-slate-600">This matrix shows who can view and who can change each area within a Shop.</p>
       <div className="mt-4 overflow-hidden bg-white ring-1 ring-inset ring-slate-200">

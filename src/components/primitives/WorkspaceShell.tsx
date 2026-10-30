@@ -309,7 +309,7 @@ export function MetadataGrid({ items }: { items: Array<{ label: string; value: R
   );
 }
 
-export function DetailFooter({ left, children }: { left: React.ReactNode; children: React.ReactNode }) {
+export function DetailFooter({ left, children }: { left: React.ReactNode; children?: React.ReactNode }) {
   return (
     <div className="flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 bg-white py-3.5 pl-7 pr-28">
       <div className="space-y-0.5">{left}</div>

@@ -213,7 +213,7 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
     return (
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {header}
-        <AccessDeniedPanel message="You are not an active Member of the selected Shop, so Team & Roles data is not visible. Each Shop's roster stays fully isolated from every other Shop." />
+        <AccessDeniedPanel message="You are not an active Member of the selected Shop, so its team list isn't shown. Ask one of its Admins for an invite." />
       </div>
     );
   }
@@ -524,7 +524,6 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
                 left={
                   <>
                     <div className="text-xs tabular-nums text-slate-600">Last updated {shortDate(selected.updated_at)} · changes recorded to the audit log</div>
-                    <div className="text-[11px] text-slate-500">J / K to navigate · ↵ save</div>
                   </>
                 }
               >
