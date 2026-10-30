@@ -1,6 +1,9 @@
 import type { Config } from "tailwindcss";
 
 // DESIGN.md §10 (v6 Ops Navy). Values live as CSS variables in src/app/globals.css.
+
+// color-mix keeps opacity modifiers (e.g. bg-slate-900/85) working on hex variables.
+const token = (name: string) => `color-mix(in srgb, var(${name}) calc(<alpha-value> * 100%), transparent)`;
 const config: Config = {
   darkMode: ["class"],
   content: ["./src/**/*.{ts,tsx}"],
@@ -12,23 +15,23 @@ const config: Config = {
       },
       colors: {
         slate: {
-          50: "var(--slate-50)",
-          100: "var(--slate-100)",
-          200: "var(--slate-200)",
-          300: "var(--slate-300)",
-          400: "var(--slate-400)",
-          500: "var(--slate-500)",
-          600: "var(--slate-600)",
-          700: "var(--slate-700)",
-          800: "var(--slate-800)",
-          900: "var(--slate-900)",
-          950: "var(--slate-950)",
+          50: token("--slate-50"),
+          100: token("--slate-100"),
+          200: token("--slate-200"),
+          300: token("--slate-300"),
+          400: token("--slate-400"),
+          500: token("--slate-500"),
+          600: token("--slate-600"),
+          700: token("--slate-700"),
+          800: token("--slate-800"),
+          900: token("--slate-900"),
+          950: token("--slate-950"),
         },
-        accent: { DEFAULT: "var(--accent)", hover: "var(--accent-hover)", tint: "var(--accent-tint)", ring: "var(--accent-ring)" },
-        success: { DEFAULT: "var(--success)", tint: "var(--success-tint)", dot: "var(--success-dot)" },
-        warning: { DEFAULT: "var(--warning)", tint: "var(--warning-tint)", dot: "var(--warning-dot)" },
-        error: { DEFAULT: "var(--error)", tint: "var(--error-tint)", dot: "var(--error-dot)" },
-        info: { DEFAULT: "var(--info)", tint: "var(--info-tint)", dot: "var(--info-dot)" },
+        accent: { DEFAULT: token("--accent"), hover: token("--accent-hover"), tint: token("--accent-tint"), ring: token("--accent-ring") },
+        success: { DEFAULT: token("--success"), tint: token("--success-tint"), dot: token("--success-dot") },
+        warning: { DEFAULT: token("--warning"), tint: token("--warning-tint"), dot: token("--warning-dot") },
+        error: { DEFAULT: token("--error"), tint: token("--error-tint"), dot: token("--error-dot") },
+        info: { DEFAULT: token("--info"), tint: token("--info-tint"), dot: token("--info-dot") },
       },
       borderRadius: {
         none: "0",
