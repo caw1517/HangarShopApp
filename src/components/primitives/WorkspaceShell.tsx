@@ -72,7 +72,7 @@ export function ContextHeaderBar({
             type="button"
             onClick={primary.onClick}
             disabled={primary.disabled}
-            className="uui-btn-primary inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-sm px-3 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50"
+            className="uui-btn-primary inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-sm px-3 text-xs font-medium disabled:cursor-not-allowed"
           >
             {primary.label}
           </button>

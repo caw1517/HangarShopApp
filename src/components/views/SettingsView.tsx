@@ -345,7 +345,7 @@ export function SettingsView({ chrome }: { chrome: ViewChrome }) {
               type="button"
               disabled={!canConfigure || selected.key === "provisioning" || selected.key === "rls" || !formDirty || !!validationError}
               onClick={handleSave}
-              className="uui-btn-primary h-9 rounded-sm px-3.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50"
+              className="uui-btn-primary h-9 rounded-sm px-3.5 text-xs font-medium disabled:cursor-not-allowed"
             >
               Save Shop settings
             </button>
@@ -536,7 +536,7 @@ function ProvisioningPanel({ isPlatformOwner }: { isPlatformOwner: boolean }) {
         type="button"
         disabled={!isPlatformOwner || !shopName.trim() || !slug.trim() || !adminFullName.trim() || !adminEmail.trim()}
         onClick={handleProvision}
-        className="uui-btn-primary rounded-sm px-3.5 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+        className="uui-btn-primary rounded-sm px-3.5 py-2 text-sm font-medium disabled:cursor-not-allowed"
       >
         Provision Shop
       </button>

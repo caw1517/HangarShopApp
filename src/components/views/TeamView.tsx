@@ -538,7 +538,7 @@ export function TeamView({ chrome }: { chrome: ViewChrome }) {
                   type="button"
                   disabled={!canManage || !hasDraftChanges}
                   onClick={handleSaveMember}
-                  className="uui-btn-primary h-9 rounded-sm px-3.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                  className="uui-btn-primary h-9 rounded-sm px-3.5 text-xs font-medium disabled:cursor-not-allowed"
                 >
                   Save changes
                 </button>
@@ -706,7 +706,7 @@ function InviteMemberForm({
           type="button"
           disabled={!canManage || !form.email.trim() || !form.fullName.trim()}
           onClick={onSubmit}
-          className="uui-btn-primary h-9 rounded-sm px-3.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50"
+          className="uui-btn-primary h-9 rounded-sm px-3.5 text-xs font-medium disabled:cursor-not-allowed"
         >
           Send invitation
         </button>
